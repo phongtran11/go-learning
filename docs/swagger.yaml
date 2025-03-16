@@ -1,0 +1,389 @@
+basePath: /api
+definitions:
+  user.ChangePasswordDTO:
+    description: Data for changing a user's password
+    properties:
+      current_password:
+        example: oldP@ssw0rd
+        type: string
+      new_password:
+        example: newSecureP@ssw0rd
+        minLength: 8
+        type: string
+    required:
+    - current_password
+    - new_password
+    type: object
+  user.CreateUserDTO:
+    description: Data for creating a new user
+    properties:
+      avatar_url:
+        example: https://example.com/avatar.jpg
+        type: string
+      date_of_birth:
+        example: "1990-01-01T00:00:00Z"
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      first_name:
+        example: John
+        type: string
+      gender:
+        enum:
+        - male
+        - female
+        - other
+        example: male
+        type: string
+      last_name:
+        example: Doe
+        type: string
+      password:
+        example: secureP@ssw0rd
+        minLength: 8
+        type: string
+      phone_number:
+        example: "+12125551234"
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  user.PaginatedUsersResponse:
+    description: Paginated list of users
+    properties:
+      page:
+        example: 1
+        type: integer
+      page_size:
+        example: 10
+        type: integer
+      total_count:
+        example: 42
+        type: integer
+      total_pages:
+        example: 5
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/user.UserResponseDTO'
+        type: array
+    type: object
+  user.UpdateUserDTO:
+    description: Data for updating an existing user
+    properties:
+      avatar_url:
+        example: https://example.com/avatar.jpg
+        type: string
+      date_of_birth:
+        example: "1990-01-01T00:00:00Z"
+        type: string
+      first_name:
+        example: John
+        type: string
+      gender:
+        enum:
+        - male
+        - female
+        - other
+        example: male
+        type: string
+      last_name:
+        example: Doe
+        type: string
+      phone_number:
+        example: "+12125551234"
+        type: string
+    type: object
+  user.UserResponseDTO:
+    description: User information returned in API responses
+    properties:
+      avatar_url:
+        example: https://example.com/avatar.jpg
+        type: string
+      created_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      date_of_birth:
+        example: "1990-01-01T00:00:00Z"
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      email_verified:
+        example: true
+        type: boolean
+      first_name:
+        example: John
+        type: string
+      full_name:
+        example: John Doe
+        type: string
+      gender:
+        example: male
+        type: string
+      id:
+        example: a87ff679-4056-4bee-8c3f-37f9e9a48e1e
+        type: string
+      last_login_at:
+        example: "2023-01-01T12:00:00Z"
+        type: string
+      last_name:
+        example: Doe
+        type: string
+      phone_number:
+        example: "+12125551234"
+        type: string
+      phone_verified:
+        example: false
+        type: boolean
+      status:
+        example: active
+        type: string
+      updated_at:
+        example: "2023-01-01T12:34:56Z"
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@yourcompany.com
+    name: API Support
+  description: API Documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Your API
+  version: "1.0"
+paths:
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of users
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Page size (default: 10, max: 100)'
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.PaginatedUsersResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with the provided details
+      parameters:
+      - description: User information
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.CreateUserDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/user.UserResponseDTO'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create a new user
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Delete a user
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a user by their unique ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.UserResponseDTO'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get a user by ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update a user's information
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated user information
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.UpdateUserDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.UserResponseDTO'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update a user
+      tags:
+      - users
+  /users/{id}/change-password:
+    post:
+      consumes:
+      - application/json
+      description: Change a user's password
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Password change information
+        in: body
+        name: passwordChange
+        required: true
+        schema:
+          $ref: '#/definitions/user.ChangePasswordDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Change user password
+      tags:
+      - users
+swagger: "2.0"

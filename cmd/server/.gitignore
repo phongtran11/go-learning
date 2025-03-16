@@ -1,0 +1,8 @@
+# setup git ignore of golang project
+bin/
+vendor/
+*.log
+*.out
+*.pid
+*.test
+*.prof

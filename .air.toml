@@ -1,0 +1,50 @@
+# Air configuration file for hot reloading
+# https://github.com/cosmtrek/air
+
+# Working directory
+# . or absolute path, please note that the directories following must be under root.
+root = "."
+tmp_dir = "tmp"
+
+[build]
+# Modified build command with explicit GOOS/GOARCH for macOS
+cmd = "go build -o ./tmp/app ./cmd/server"
+# Binary file yields from `cmd`.
+bin = "./tmp/app"
+# This log file places in your tmp_dir.
+log = "air_errors.log"
+# Watch these directories for changes (recursive).
+include_dir = ["cmd", "internal"]
+# Exclude files or directories from watching (relative to root)
+exclude_dir = ["tmp", ".git", "vendor"]
+# Watch these file extensions for changes.
+include_ext = ["go", "yaml", "yml", "toml"]
+# Ignore these file extensions or directories
+exclude_file = []
+# Only watch these files. Empty means watch all files.
+include_file = []
+# Poll files for changes instead of using fsnotify.
+poll = false
+# Poll interval (defaults to 500ms)
+poll_interval = 500 # ms
+# It's not necessary to trigger build each time file changes if it's too frequent.
+delay = 1000 # ms
+# Kill process before starting a new one
+kill_delay = "0s"
+# Set this to true to enable debug mode
+debug = true
+
+[log]
+# Show log timestamp
+time = true
+
+[color]
+# Customize each part's color
+main = "magenta"
+watcher = "cyan"
+build = "yellow"
+runner = "green"
+
+[misc]
+# Delete tmp directory on exit
+clean_on_exit = true
