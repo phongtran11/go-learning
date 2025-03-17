@@ -147,7 +147,7 @@ definitions:
         example: "2023-01-01T12:34:56Z"
         type: string
     type: object
-host: localhost:3000
+host: localhost:8080
 info:
   contact:
     email: support@yourcompany.com
