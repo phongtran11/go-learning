@@ -1,4 +1,4 @@
-.PHONY: dev swagger
+.PHONY: dev swagger migration-gen migrate-up migrate-down migrate-version
 
 
 dev:
@@ -8,3 +8,17 @@ dev:
 swagger:
 	@echo "Generating swagger"
 	@swag init -g cmd/server/main.go
+
+migrate-gen:
+	@echo "Generating migration file"
+	@read -p "Enter migration name: " name; \
+	migrate create -ext sql -dir internal/shared/database/migrations -seq $$name
+
+migrate-up:
+	@go run cmd/migration/main.go -action up
+
+migrate-down:
+	@go run cmd/migration/main.go -action down
+
+migrate-version:
+	@go run cmd/migration/main.go -action version

@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"log"
 	"modular-fx-fiber/internal/core/config"
-	"modular-fx-fiber/internal/shared/logger"
+	"os"
 	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // Database represents the database connection
@@ -17,18 +18,36 @@ type Database struct {
 }
 
 // NewDatabase creates a new database connection
-func NewDatabase(config *config.Config, l *logger.ZapLogger) (*Database, error) {
+func NewDatabase(config *config.Config) (*Database, error) {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
 		config.DB.HOST, config.DB.USER, config.DB.PASSWORD, config.DB.NAME, config.DB.PORT, config.DB.SSL)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// Create a new GORM logger
+	newLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold:             time.Second, // Slow SQL threshold
+			LogLevel:                  logger.Info, // Log level
+			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
+			ParameterizedQueries:      false,       // Don't include params in the SQL log
+			Colorful:                  false,       // Disable color
+		},
+	)
+
+	// Configure GORM
+	gormConfig := &gorm.Config{
+		Logger: newLogger,
+		NowFunc: func() time.Time {
+			return time.Now().UTC()
+		},
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), gormConfig)
 	if err != nil {
 		log.Printf("Failed to connect to database: %v", err)
 		return nil, err
 	}
-
-	l.Info("Connected to database")
 
 	// Configure connection pool
 	sqlDB, err := db.DB()

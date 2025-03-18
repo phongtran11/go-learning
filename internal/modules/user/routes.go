@@ -6,25 +6,18 @@ import (
 )
 
 type UserRoutes struct {
-	handlers   *Handlers
-	middleware *middleware.Middleware
+	handlers *Handlers
 }
 
 // NewUserRoutes creates new user routes
-func NewUserRoutes(handlers *Handlers, middleware *middleware.Middleware) *UserRoutes {
+func NewUserRoutes(h *Handlers) *UserRoutes {
 
 	return &UserRoutes{
-		handlers:   handlers,
-		middleware: middleware,
+		handlers: h,
 	}
 }
 
-func Register(server *server.Server, handlers *Handlers, middleware *middleware.Middleware) {
-	group := server.App.Group("/users")
-	group.Post("/", handlers.Create)
-	group.Get("/", handlers.List)
-	group.Get("/:id", handlers.GetByID)
-	group.Put("/:id", handlers.Update)
-	group.Delete("/:id", handlers.Delete)
-
+func Register(s *server.Server, h *Handlers, m *middleware.Middleware) {
+	group := s.App.Group("api/users", m.JWT())
+	group.Post("/", h.Create)
 }

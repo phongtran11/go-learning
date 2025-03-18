@@ -11,8 +11,8 @@ const docTemplate = `{
         "title": "{{.Title}}",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
-            "name": "API Support",
-            "email": "support@yourcompany.com"
+            "name": "PhongTran",
+            "email": "phongtran11.tt@gmail.com"
         },
         "license": {
             "name": "Apache 2.0",
@@ -23,9 +23,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/users": {
-            "get": {
-                "description": "Retrieve a paginated list of users",
+        "/auth/login": {
+            "post": {
+                "description": "Authenticate a user and return tokens",
                 "consumes": [
                     "application/json"
                 ],
@@ -33,39 +33,92 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "auth"
                 ],
-                "summary": "List users",
+                "summary": "User login",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Page number (default: 1)",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size (default: 10, max: 100)",
-                        "name": "pageSize",
-                        "in": "query"
+                        "description": "Login credentials",
+                        "name": "credentials",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginDTO"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/user.PaginatedUsersResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/auth.DataResponseDTO"
                         }
                     }
                 }
-            },
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Refresh access token using a refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh token",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "token",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.RefreshTokenDTO"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Register a new user and return tokens",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "User registration",
+                "parameters": [
+                    {
+                        "description": "Registration data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.RegisterDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/auth.DataResponseDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
             "post": {
                 "description": "Create a new user with the provided details",
                 "consumes": [
@@ -80,7 +133,7 @@ const docTemplate = `{
                 "summary": "Create a new user",
                 "parameters": [
                     {
-                        "description": "User information",
+                        "description": "User details",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -93,263 +146,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/user.UserResponseDTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/users/{id}": {
-            "get": {
-                "description": "Retrieve a user by their unique ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Get a user by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/user.UserResponseDTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update a user's information",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Update a user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Updated user information",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.UpdateUserDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/user.UserResponseDTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete a user by their ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Delete a user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/users/{id}/change-password": {
-            "post": {
-                "description": "Change a user's password",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Change user password",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Password change information",
-                        "name": "passwordChange",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.ChangePasswordDTO"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/user.DataResponseDTO"
                         }
                     }
                 }
@@ -357,22 +154,127 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "user.ChangePasswordDTO": {
-            "description": "Data for changing a user's password",
+        "auth.AuthResponseDTO": {
+            "description": "Authentication response with tokens and user data",
+            "type": "object",
+            "properties": {
+                "token": {
+                    "$ref": "#/definitions/auth.TokenResponseDTO"
+                },
+                "user": {
+                    "$ref": "#/definitions/user.UserResponseDTO"
+                }
+            }
+        },
+        "auth.DataResponseDTO": {
+            "description": "Generic response with auth data",
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/auth.AuthResponseDTO"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "auth.LoginDTO": {
+            "description": "Login credentials",
             "type": "object",
             "required": [
-                "current_password",
-                "new_password"
+                "email",
+                "password"
             ],
             "properties": {
-                "current_password": {
+                "email": {
                     "type": "string",
-                    "example": "oldP@ssw0rd"
+                    "example": "user@example.com"
                 },
-                "new_password": {
+                "password": {
                     "type": "string",
                     "minLength": 8,
-                    "example": "newSecureP@ssw0rd"
+                    "example": "secureP@ssw0rd"
+                }
+            }
+        },
+        "auth.RefreshTokenDTO": {
+            "description": "Refresh token request data",
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
+        "auth.RegisterDTO": {
+            "description": "Registration data",
+            "type": "object",
+            "required": [
+                "email",
+                "first_name",
+                "last_name",
+                "password"
+            ],
+            "properties": {
+                "date_of_birth": {
+                    "type": "string",
+                    "example": "1990-01-01T00:00:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "first_name": {
+                    "type": "string",
+                    "example": "John"
+                },
+                "gender": {
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2
+                    ],
+                    "example": 1
+                },
+                "last_name": {
+                    "type": "string",
+                    "example": "Doe"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "secureP@ssw0rd"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "+12125551234"
+                }
+            }
+        },
+        "auth.TokenResponseDTO": {
+            "description": "Token response data",
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "expires_in": {
+                    "description": "in seconds",
+                    "type": "integer",
+                    "example": 3600
+                },
+                "refresh_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "token_type": {
+                    "type": "string",
+                    "example": "Bearer"
                 }
             }
         },
@@ -403,13 +305,12 @@ const docTemplate = `{
                     "example": "John"
                 },
                 "gender": {
-                    "type": "string",
+                    "type": "integer",
                     "enum": [
-                        "male",
-                        "female",
-                        "other"
+                        1,
+                        2
                     ],
-                    "example": "male"
+                    "example": 1
                 },
                 "last_name": {
                     "type": "string",
@@ -426,66 +327,14 @@ const docTemplate = `{
                 }
             }
         },
-        "user.PaginatedUsersResponse": {
-            "description": "Paginated list of users",
+        "user.DataResponseDTO": {
             "type": "object",
             "properties": {
-                "page": {
-                    "type": "integer",
-                    "example": 1
+                "data": {
+                    "$ref": "#/definitions/user.UserResponseDTO"
                 },
-                "page_size": {
-                    "type": "integer",
-                    "example": 10
-                },
-                "total_count": {
-                    "type": "integer",
-                    "example": 42
-                },
-                "total_pages": {
-                    "type": "integer",
-                    "example": 5
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/user.UserResponseDTO"
-                    }
-                }
-            }
-        },
-        "user.UpdateUserDTO": {
-            "description": "Data for updating an existing user",
-            "type": "object",
-            "properties": {
-                "avatar_url": {
-                    "type": "string",
-                    "example": "https://example.com/avatar.jpg"
-                },
-                "date_of_birth": {
-                    "type": "string",
-                    "example": "1990-01-01T00:00:00Z"
-                },
-                "first_name": {
-                    "type": "string",
-                    "example": "John"
-                },
-                "gender": {
-                    "type": "string",
-                    "enum": [
-                        "male",
-                        "female",
-                        "other"
-                    ],
-                    "example": "male"
-                },
-                "last_name": {
-                    "type": "string",
-                    "example": "Doe"
-                },
-                "phone_number": {
-                    "type": "string",
-                    "example": "+12125551234"
+                "success": {
+                    "type": "boolean"
                 }
             }
         },
@@ -503,7 +352,11 @@ const docTemplate = `{
                 },
                 "date_of_birth": {
                     "type": "string",
-                    "example": "1990-01-01T00:00:00Z"
+                    "example": "1990-01-01"
+                },
+                "deleted_at": {
+                    "type": "string",
+                    "example": "2023-01-10T00:00:00Z"
                 },
                 "email": {
                     "type": "string",
@@ -522,12 +375,12 @@ const docTemplate = `{
                     "example": "John Doe"
                 },
                 "gender": {
-                    "type": "string",
-                    "example": "male"
+                    "type": "integer",
+                    "example": 1
                 },
                 "id": {
-                    "type": "string",
-                    "example": "a87ff679-4056-4bee-8c3f-37f9e9a48e1e"
+                    "type": "integer",
+                    "example": 1
                 },
                 "last_login_at": {
                     "type": "string",
@@ -541,19 +394,22 @@ const docTemplate = `{
                     "type": "string",
                     "example": "+12125551234"
                 },
-                "phone_verified": {
-                    "type": "boolean",
-                    "example": false
-                },
                 "status": {
-                    "type": "string",
-                    "example": "active"
+                    "type": "integer",
+                    "example": 1
                 },
                 "updated_at": {
                     "type": "string",
                     "example": "2023-01-01T12:34:56Z"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`
@@ -564,7 +420,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api",
 	Schemes:          []string{},
-	Title:            "Your API",
+	Title:            "Swagger Modular FX Fiber API",
 	Description:      "API Documentation",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

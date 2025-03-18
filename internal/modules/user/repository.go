@@ -49,9 +49,6 @@ func (r *repository) GetByID(id uuid.UUID) (*User, error) {
 func (r *repository) GetByEmail(email string) (*User, error) {
 	var user User
 	if err := r.db.First(&user, "email = ?", email).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
 		return nil, err
 	}
 	return &user, nil

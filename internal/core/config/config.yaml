@@ -10,3 +10,8 @@ db:
   password: "postgres"
   name: "postgres"
   ssl: "disable"
+
+jwt:
+  secret: "your-256-bit-secret-key-here"
+  access_expiry_minutes: 60
+  refresh_expiry_days: 7

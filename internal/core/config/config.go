@@ -10,6 +10,7 @@ import (
 type Config struct {
 	App AppConfig `yaml:"app"`
 	DB  DBConfig  `yaml:"db"`
+	JWT JWTConfig `yaml:"jwt"`
 }
 
 type AppConfig struct {
@@ -25,6 +26,12 @@ type DBConfig struct {
 	PASSWORD string `yaml:"password"`
 	NAME     string `yaml:"name"`
 	SSL      string `yaml:"ssl"`
+}
+
+type JWTConfig struct {
+	Secret              string `yaml:"secret"`
+	AccessExpiryMinutes int    `yaml:"access_expiry_minutes"`
+	RefreshExpiryDays   int    `yaml:"refresh_expiry_days"`
 }
 
 // NewConfig creates a new configuration instance
