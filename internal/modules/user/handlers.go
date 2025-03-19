@@ -10,13 +10,13 @@ import (
 
 // Handlers defines the HTTP handlers for users
 type Handlers struct {
-	service   Service
+	service   UserService
 	validator *validator.Validator
 	logger    *logger.ZapLogger
 }
 
 // NewHandlers creates a new user handlers instance
-func NewHandlers(l *logger.ZapLogger, v *validator.Validator, s Service) *Handlers {
+func NewHandlers(l *logger.ZapLogger, v *validator.Validator, s UserService) *Handlers {
 	return &Handlers{
 		service:   s,
 		validator: v,
@@ -34,7 +34,7 @@ func NewHandlers(l *logger.ZapLogger, v *validator.Validator, s Service) *Handle
 // @Success 201 {object} DataResponseDTO
 // @Router /users [post]
 func (h *Handlers) Create(c *fiber.Ctx) error {
-	var createUserDto CreateUserDTO
+	createUserDto := &CreateUserDTO{}
 
 	// Parse request body
 	if err := c.BodyParser(&createUserDto); err != nil {
@@ -45,7 +45,7 @@ func (h *Handlers) Create(c *fiber.Ctx) error {
 	}
 
 	// Validate request body
-	err := h.validator.ValidateStruct(createUserDto)
+	err := h.validator.ValidateStruct(*createUserDto)
 	if err != nil {
 
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -69,5 +69,8 @@ func (h *Handlers) Create(c *fiber.Ctx) error {
 	}
 
 	// Response with created user
-	return c.Status(fiber.StatusCreated).JSON(user)
+	return c.Status(fiber.StatusCreated).JSON(DataResponseDTO{
+		Success: true,
+		Data:    user,
+	})
 }

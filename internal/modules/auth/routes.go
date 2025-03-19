@@ -24,5 +24,5 @@ func Register(server *server.Server, routes *AuthRoutes) {
 
 	group.Post("/login", routes.handlers.Login)
 	group.Post("/register", routes.handlers.Register)
-	group.Post("/refresh", routes.handlers.RefreshToken)
+	group.Post("/refresh-token", routes.handlers.RefreshToken)
 }

@@ -51,7 +51,7 @@
                 }
             }
         },
-        "/auth/refresh": {
+        "/auth/refresh-token": {
             "post": {
                 "description": "Refresh access token using a refresh token",
                 "consumes": [
@@ -75,7 +75,14 @@
                         }
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/auth.DataResponseDTO"
+                        }
+                    }
+                }
             }
         },
         "/auth/register": {
@@ -106,7 +113,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/auth.DataResponseDTO"
+                            "$ref": "#/definitions/auth.RegisterSuccessDTO"
                         }
                     }
                 }
@@ -148,24 +155,12 @@
         }
     },
     "definitions": {
-        "auth.AuthResponseDTO": {
-            "description": "Authentication response with tokens and user data",
-            "type": "object",
-            "properties": {
-                "token": {
-                    "$ref": "#/definitions/auth.TokenResponseDTO"
-                },
-                "user": {
-                    "$ref": "#/definitions/user.UserResponseDTO"
-                }
-            }
-        },
         "auth.DataResponseDTO": {
             "description": "Generic response with auth data",
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/auth.AuthResponseDTO"
+                    "$ref": "#/definitions/auth.TokenResponseDTO"
                 },
                 "success": {
                     "type": "boolean"
@@ -245,7 +240,19 @@
                 },
                 "phone_number": {
                     "type": "string",
-                    "example": "+12125551234"
+                    "example": "0975234412"
+                }
+            }
+        },
+        "auth.RegisterSuccessDTO": {
+            "description": "Registration success response data",
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/auth.TokenResponseDTO"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         },
@@ -272,67 +279,7 @@
                 }
             }
         },
-        "user.CreateUserDTO": {
-            "description": "Data for creating a new user",
-            "type": "object",
-            "required": [
-                "email",
-                "first_name",
-                "last_name",
-                "password"
-            ],
-            "properties": {
-                "avatar_url": {
-                    "type": "string",
-                    "example": "https://example.com/avatar.jpg"
-                },
-                "date_of_birth": {
-                    "type": "string",
-                    "example": "1990-01-01T00:00:00Z"
-                },
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "first_name": {
-                    "type": "string",
-                    "example": "John"
-                },
-                "gender": {
-                    "type": "integer",
-                    "enum": [
-                        1,
-                        2
-                    ],
-                    "example": 1
-                },
-                "last_name": {
-                    "type": "string",
-                    "example": "Doe"
-                },
-                "password": {
-                    "type": "string",
-                    "minLength": 8,
-                    "example": "secureP@ssw0rd"
-                },
-                "phone_number": {
-                    "type": "string",
-                    "example": "+12125551234"
-                }
-            }
-        },
-        "user.DataResponseDTO": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/user.UserResponseDTO"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "user.UserResponseDTO": {
+        "models.UserResponseDTO": {
             "description": "User information returned in API responses",
             "type": "object",
             "properties": {
@@ -395,6 +342,66 @@
                 "updated_at": {
                     "type": "string",
                     "example": "2023-01-01T12:34:56Z"
+                }
+            }
+        },
+        "user.CreateUserDTO": {
+            "description": "Data for creating a new user",
+            "type": "object",
+            "required": [
+                "email",
+                "first_name",
+                "last_name",
+                "password"
+            ],
+            "properties": {
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
+                },
+                "date_of_birth": {
+                    "type": "string",
+                    "example": "1990-01-01T00:00:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "first_name": {
+                    "type": "string",
+                    "example": "John"
+                },
+                "gender": {
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2
+                    ],
+                    "example": 1
+                },
+                "last_name": {
+                    "type": "string",
+                    "example": "Doe"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "secureP@ssw0rd"
+                },
+                "phone_number": {
+                    "type": "string",
+                    "example": "+12125551234"
+                }
+            }
+        },
+        "user.DataResponseDTO": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.UserResponseDTO"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         }

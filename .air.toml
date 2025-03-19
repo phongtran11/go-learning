@@ -8,7 +8,7 @@ tmp_dir = "tmp"
 
 [build]
 # Modified build command with explicit GOOS/GOARCH for macOS
-cmd = "go build -o ./tmp/app ./cmd/server"
+cmd = "go build -buildvcs=false -o ./tmp/app ./cmd/server"
 # Binary file yields from `cmd`.
 bin = "./tmp/app"
 # This log file places in your tmp_dir.

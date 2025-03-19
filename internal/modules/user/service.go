@@ -2,7 +2,11 @@ package user
 
 import (
 	"errors"
+	"modular-fx-fiber/internal/shared/interfaces"
+	"modular-fx-fiber/internal/shared/logger"
+	"modular-fx-fiber/internal/shared/models"
 
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -13,22 +17,28 @@ var (
 )
 
 // Service defines the business logic for users
-type Service interface {
-	CreateUser(dto CreateUserDTO) (*DataResponseDTO, error)
+type UserService interface {
+	CreateUser(dto *CreateUserDTO) (*models.UserResponseDTO, error)
 }
 
 // service implements the Service interface
 type service struct {
-	repo Repository
+	logger *logger.ZapLogger
+	repo   interfaces.UserRepository
 }
 
 // NewService creates a new user service
-func NewService(repo Repository) Service {
-	return &service{repo: repo}
+func NewService(
+	logger *logger.ZapLogger,
+	repo interfaces.UserRepository) UserService {
+	return &service{
+		logger: logger,
+		repo:   repo,
+	}
 }
 
 // CreateUser creates a new user
-func (s *service) CreateUser(dto CreateUserDTO) (*DataResponseDTO, error) {
+func (s *service) CreateUser(dto *CreateUserDTO) (*models.UserResponseDTO, error) {
 	// Check if email already exists
 	existingUser, err := s.repo.GetByEmail(dto.Email)
 	if err != nil {
@@ -45,23 +55,23 @@ func (s *service) CreateUser(dto CreateUserDTO) (*DataResponseDTO, error) {
 	}
 
 	// Create user
-	user := &User{
-		Email:         dto.Email,
-		Password:      string(hashedPassword),
-		PhoneNumber:   dto.PhoneNumber,
-		FirstName:     dto.FirstName,
-		LastName:      dto.LastName,
-		DateOfBirth:   dto.DateOfBirth,
-		Gender:        dto.Gender,
-		AvatarURL:     dto.AvatarURL,
-		Status:        USER_STATUS_ACTIVE,
-		EmailVerified: false,
+	user := &models.User{
+		Email:       dto.Email,
+		Password:    string(hashedPassword),
+		PhoneNumber: dto.PhoneNumber,
+		FirstName:   dto.FirstName,
+		LastName:    dto.LastName,
+		DateOfBirth: dto.DateOfBirth,
+		Gender:      dto.Gender,
+		Status:      models.USER_STATUS_ACTIVE,
 	}
+
+	s.logger.Info("user", zap.Any("user", user))
 
 	if err := s.repo.Create(user); err != nil {
 		return nil, err
 	}
 
-	responseDTO := user.ToResponseDTO()
-	return &responseDTO, nil
+	userResponse := user.ToResponseDTO()
+	return userResponse, nil
 }

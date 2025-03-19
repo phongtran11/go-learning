@@ -2,14 +2,15 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 	"modular-fx-fiber/internal/core/config"
 	"modular-fx-fiber/internal/modules/user"
+	"modular-fx-fiber/internal/shared/interfaces"
 	"modular-fx-fiber/internal/shared/logger"
+	"modular-fx-fiber/internal/shared/models"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -17,61 +18,69 @@ var (
 	ErrInvalidCredentials  = errors.New("invalid credentials")
 	ErrInvalidRefreshToken = errors.New("invalid or expired refresh token")
 	ErrUserNotActive       = errors.New("user is not active")
+	ErrUserNotFound        = errors.New("user not found")
 )
 
-// Service defines the business logic for authentication
-type Service interface {
-	Login(dto LoginDTO) (*DataResponseDTO, error)
-	Register(dto RegisterDTO) (*DataResponseDTO, error)
-	RefreshToken(dto RefreshTokenDTO) (*DataResponseDTO, error)
+// RefreshTokenService defines the business logic for authentication
+type RefreshTokenService interface {
+	Login(dto LoginDTO) (*TokenResponseDTO, error)
+	Register(dto RegisterDTO) (*TokenResponseDTO, error)
+	RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error)
 }
 
 // service implements the Service interface
 type service struct {
-	config      *config.Config
-	userService user.Service
-	userRepo    user.Repository
-	authRepo    Repository
-	logger      *logger.ZapLogger
+	config *config.Config
+	logger *logger.ZapLogger
+
+	userService user.UserService
+
+	userRepo interfaces.UserRepository
+	authRepo interfaces.RefreshTokenRepository
 }
 
 // NewService creates a new auth service
 func NewService(
 	config *config.Config,
-	userService user.Service,
-	userRepo user.Repository,
-	authRepo Repository,
 	logger *logger.ZapLogger,
-) Service {
+	userService user.UserService,
+	userRepo interfaces.UserRepository,
+	authRepo interfaces.RefreshTokenRepository,
+) RefreshTokenService {
 	return &service{
 		config:      config,
+		logger:      logger,
 		userService: userService,
 		userRepo:    userRepo,
 		authRepo:    authRepo,
-		logger:      logger,
 	}
 }
 
 // Login authenticates a user and returns tokens
-func (s *service) Login(dto LoginDTO) (*DataResponseDTO, error) {
+func (s *service) Login(dto LoginDTO) (*TokenResponseDTO, error) {
 	// Get user by email
 	u, err := s.userRepo.GetByEmail(dto.Email)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("Error fetching user by email: %v", err))
+		s.logger.Error("Failed to fetch user by email", zap.String("email", dto.Email), zap.Error(err))
 		return nil, err
 	}
 	if u == nil {
+		s.logger.Info("Login attempt with non-existent email", zap.String("email", dto.Email))
 		return nil, ErrInvalidCredentials
 	}
 
 	// Check if user is active
-	if u.Status != user.USER_STATUS_ACTIVE {
+	if u.Status != models.USER_STATUS_ACTIVE {
+		s.logger.Info("Login attempt with inactive account",
+			zap.String("email", dto.Email),
+			zap.Int8("status", u.Status))
 		return nil, ErrUserNotActive
 	}
 
 	// Verify password
 	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(dto.Password))
 	if err != nil {
+		s.logger.Info("Failed password verification", zap.String("email", dto.Email))
 		return nil, ErrInvalidCredentials
 	}
 
@@ -80,31 +89,33 @@ func (s *service) Login(dto LoginDTO) (*DataResponseDTO, error) {
 	u.LastLoginAt = &now
 	err = s.userRepo.Update(u)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("Error updating last login time: %v", err))
+		s.logger.Error("Failed to update last login time",
+			zap.String("email", u.Email),
+			zap.Int64("user_id", u.ID),
+			zap.Error(err))
 		return nil, err
 	}
 
 	// Generate tokens
 	tokens, err := s.generateTokens(u)
 	if err != nil {
+		s.logger.Error("Failed to generate tokens",
+			zap.String("email", u.Email),
+			zap.Int64("user_id", u.ID),
+			zap.Error(err))
 		return nil, err
 	}
 
-	// Create response
-	responseData := DataResponseDTO{
-		Success: true,
-		Data: AuthResponseDTO{
-			Token: *tokens,
-		},
-	}
-
-	return &responseData, nil
+	s.logger.Info("User logged in successfully",
+		zap.String("email", u.Email),
+		zap.Int64("user_id", u.ID))
+	return tokens, nil
 }
 
 // Register creates a new user and returns tokens
-func (s *service) Register(dto RegisterDTO) (*DataResponseDTO, error) {
+func (s *service) Register(dto RegisterDTO) (*TokenResponseDTO, error) {
 	// Convert RegisterDTO to user.CreateUserDTO
-	createUserDto := user.CreateUserDTO{
+	createUserDto := &user.CreateUserDTO{
 		Email:       dto.Email,
 		Password:    dto.Password,
 		PhoneNumber: dto.PhoneNumber,
@@ -117,85 +128,127 @@ func (s *service) Register(dto RegisterDTO) (*DataResponseDTO, error) {
 	// Create user
 	_, err := s.userService.CreateUser(createUserDto)
 	if err != nil {
+		s.logger.Error("Failed to create user during registration",
+			zap.String("email", dto.Email),
+			zap.Error(err))
 		return nil, err
 	}
 
 	// Get complete user
 	createdUser, err := s.userRepo.GetByEmail(dto.Email)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("Error fetching created user: %v", err))
+		s.logger.Error("Failed to fetch created user",
+			zap.String("email", dto.Email),
+			zap.Error(err))
 		return nil, err
+	}
+	if createdUser == nil {
+		s.logger.Error("Created user not found after registration",
+			zap.String("email", dto.Email))
+		return nil, ErrUserNotFound
 	}
 
 	// Generate tokens
 	tokens, err := s.generateTokens(createdUser)
 	if err != nil {
+		s.logger.Error("Failed to generate tokens for new user",
+			zap.String("email", createdUser.Email),
+			zap.Int64("user_id", createdUser.ID),
+			zap.Error(err))
 		return nil, err
 	}
 
-	// Create response
-	responseData := DataResponseDTO{
-		Success: true,
-		Data: AuthResponseDTO{
-			Token: *tokens,
-		},
-	}
-
-	return &responseData, nil
+	s.logger.Info("User registered successfully",
+		zap.String("email", createdUser.Email),
+		zap.Int64("user_id", createdUser.ID))
+	return tokens, nil
 }
 
 // RefreshToken validates a refresh token and issues new tokens
-func (s *service) RefreshToken(dto RefreshTokenDTO) (*DataResponseDTO, error) {
+func (s *service) RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error) {
 	// Get refresh token from database
 	savedToken, err := s.authRepo.GetRefreshToken(dto.RefreshToken)
-	if err != nil || savedToken == nil {
+	if err != nil {
+		s.logger.Warn("Failed to retrieve refresh token",
+			zap.String("token", dto.RefreshToken),
+			zap.Error(err))
+		return nil, ErrInvalidRefreshToken
+	}
+	if savedToken == nil {
+		s.logger.Warn("Refresh token not found", zap.String("token", dto.RefreshToken))
+		return nil, ErrInvalidRefreshToken
+	}
+
+	// Check if token is expired
+	if time.Now().After(savedToken.ExpiresAt) {
+		s.logger.Warn("Expired refresh token used",
+			zap.String("token", dto.RefreshToken),
+			zap.Time("expires_at", savedToken.ExpiresAt))
+		// Clean up expired token
+		if err := s.authRepo.DeleteRefreshToken(dto.RefreshToken); err != nil {
+			s.logger.Error("Failed to delete expired token",
+				zap.String("token", dto.RefreshToken),
+				zap.Error(err))
+		}
 		return nil, ErrInvalidRefreshToken
 	}
 
 	// Get user
-	userId := uuid.UUID{}
-	err = userId.Scan(savedToken.UserID)
+	user, err := s.userRepo.GetByID(savedToken.UserID)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("Error parsing user ID: %v", err))
+		s.logger.Error("Failed to fetch user for refresh token",
+			zap.Int64("user_id", savedToken.UserID),
+			zap.Error(err))
 		return nil, err
 	}
-
-	userObj, err := s.userRepo.GetByID(userId)
-	if err != nil {
-		return nil, err
-	}
-	if userObj == nil {
+	if user == nil {
+		s.logger.Warn("Refresh token used for non-existent user",
+			zap.Int64("user_id", savedToken.UserID))
 		return nil, ErrInvalidRefreshToken
 	}
 
+	// Check if user is still active
+	if user.Status != models.USER_STATUS_ACTIVE {
+		s.logger.Warn("Refresh token used for inactive user",
+			zap.Int64("user_id", user.ID),
+			zap.Int8("status", user.Status))
+		return nil, ErrUserNotActive
+	}
+
 	// Remove used refresh token
-	err = s.authRepo.DeleteRefreshToken(dto.RefreshToken)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("Error deleting used refresh token: %v", err))
+	if err = s.authRepo.DeleteRefreshToken(dto.RefreshToken); err != nil {
+		s.logger.Error("Failed to delete used refresh token",
+			zap.String("token", dto.RefreshToken),
+			zap.Error(err))
+		// Continue despite error - don't block token refresh
 	}
 
 	// Generate new tokens
-	tokens, err := s.generateTokens(userObj)
+	tokens, err := s.generateTokens(user)
 	if err != nil {
+		s.logger.Error("Failed to generate new tokens",
+			zap.Int64("user_id", user.ID),
+			zap.Error(err))
 		return nil, err
 	}
 
-	responseData := DataResponseDTO{
-		Success: true,
-		Data: AuthResponseDTO{
-			Token: *tokens,
-		},
-	}
-
-	return &responseData, nil
+	s.logger.Info("Token refreshed successfully", zap.Int64("user_id", user.ID))
+	return tokens, nil
 }
 
 // generateTokens generates JWT access and refresh tokens
-func (s *service) generateTokens(user *user.User) (*TokenResponseDTO, error) {
+func (s *service) generateTokens(user *models.User) (*TokenResponseDTO, error) {
 	// Get JWT config
 	jwtSecret := []byte(s.config.JWT.Secret)
 	accessTokenExpiry := time.Duration(s.config.JWT.AccessExpiryMinutes) * time.Minute
 	refreshTokenExpiry := time.Duration(s.config.JWT.RefreshExpiryDays) * 24 * time.Hour
+
+	// Log token expiry values for debugging
+	s.logger.Debug("Token expiry settings",
+		zap.Int("access_expiry_minutes", s.config.JWT.AccessExpiryMinutes),
+		zap.Int("refresh_expiry_days", s.config.JWT.RefreshExpiryDays),
+		zap.Duration("access_duration", accessTokenExpiry),
+		zap.Duration("refresh_duration", refreshTokenExpiry))
 
 	// Create access token
 	accessToken := jwt.New(jwt.SigningMethodHS256)
@@ -207,31 +260,42 @@ func (s *service) generateTokens(user *user.User) (*TokenResponseDTO, error) {
 	// Sign access token
 	accessTokenString, err := accessToken.SignedString(jwtSecret)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("Error signing access token: %v", err))
+		s.logger.Error("Failed to sign access token", zap.Error(err))
 		return nil, err
 	}
 
 	// Create refresh token
-	refreshToken := uuid.New().String()
+	refreshToken := jwt.New(jwt.SigningMethodHS256)
+	refreshClaims := refreshToken.Claims.(jwt.MapClaims)
+	refreshClaims["user_id"] = user.ID
+	refreshClaims["email"] = user.Email
+	refreshClaims["exp"] = time.Now().Add(refreshTokenExpiry).Unix()
+
+	// Sign refresh token
+	refreshTokenString, err := refreshToken.SignedString(jwtSecret)
+	if err != nil {
+		s.logger.Error("Failed to sign refresh token", zap.Error(err))
+		return nil, err
+	}
 
 	// Save refresh token to database
-	refreshTokenModel := RefreshToken{
-		UserID:    uint64(user.ID),
-		Token:     refreshToken,
+	refreshTokenModel := models.RefreshToken{
+		UserID:    user.ID,
+		Token:     refreshTokenString,
 		ExpiresAt: time.Now().Add(refreshTokenExpiry),
 	}
 
 	err = s.authRepo.SaveRefreshToken(&refreshTokenModel)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("Error saving refresh token: %v", err))
+		s.logger.Error("Failed to save refresh token to database", zap.Error(err))
 		return nil, err
 	}
 
 	// Create response
 	return &TokenResponseDTO{
 		AccessToken:  accessTokenString,
-		RefreshToken: refreshToken,
-		ExpiresIn:    int(accessTokenExpiry.Seconds()),
+		RefreshToken: refreshTokenString,
+		ExpiresIn:    uint(accessTokenExpiry.Seconds()),
 		TokenType:    "Bearer",
 	}, nil
 }

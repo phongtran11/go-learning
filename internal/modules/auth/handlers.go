@@ -11,13 +11,13 @@ import (
 
 // Handlers defines the HTTP handlers for authentication
 type Handlers struct {
-	service   Service
+	service   RefreshTokenService
 	validator *validator.Validator
 	logger    *logger.ZapLogger
 }
 
 // NewHandlers creates a new auth handlers instance
-func NewHandlers(l *logger.ZapLogger, v *validator.Validator, s Service) *Handlers {
+func NewHandlers(l *logger.ZapLogger, v *validator.Validator, s RefreshTokenService) *Handlers {
 	return &Handlers{
 		service:   s,
 		validator: v,
@@ -55,7 +55,7 @@ func (h *Handlers) Login(c *fiber.Ctx) error {
 	}
 
 	// Login user
-	response, err := h.service.Login(loginDto)
+	tokens, err := h.service.Login(loginDto)
 	if errors.Is(err, ErrInvalidCredentials) {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"success": false,
@@ -75,7 +75,10 @@ func (h *Handlers) Login(c *fiber.Ctx) error {
 	}
 
 	// Return response
-	return c.JSON(response)
+	return c.JSON(DataResponseDTO{
+		Success: true,
+		Data:    tokens,
+	})
 }
 
 // Register handles user registration
@@ -85,7 +88,7 @@ func (h *Handlers) Login(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param user body RegisterDTO true "Registration data"
-// @Success 201 {object} DataResponseDTO
+// @Success 201 {object} RegisterSuccessDTO
 // @Router /auth/register [post]
 func (h *Handlers) Register(c *fiber.Ctx) error {
 	var registerDto RegisterDTO
@@ -108,7 +111,7 @@ func (h *Handlers) Register(c *fiber.Ctx) error {
 	}
 
 	// Register user
-	response, err := h.service.Register(registerDto)
+	userCreated, err := h.service.Register(registerDto)
 	if err != nil {
 		if errors.Is(err, user.ErrEmailAlreadyExists) {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -123,8 +126,13 @@ func (h *Handlers) Register(c *fiber.Ctx) error {
 		})
 	}
 
+	registerSuccessDTO := &RegisterSuccessDTO{
+		Success: true,
+		Data:    userCreated,
+	}
+
 	// Return response
-	return c.Status(fiber.StatusCreated).JSON(response)
+	return c.Status(fiber.StatusCreated).JSON(registerSuccessDTO)
 }
 
 // RefreshToken handles token refresh
@@ -134,7 +142,8 @@ func (h *Handlers) Register(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param token body RefreshTokenDTO true "Refresh token"
-// @Router /auth/refresh [post]
+// @Success 201 {object} DataResponseDTO
+// @Router /auth/refresh-token [post]
 func (h *Handlers) RefreshToken(c *fiber.Ctx) error {
 	var refreshDto RefreshTokenDTO
 

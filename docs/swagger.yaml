@@ -1,18 +1,10 @@
 basePath: /api
 definitions:
-  auth.AuthResponseDTO:
-    description: Authentication response with tokens and user data
-    properties:
-      token:
-        $ref: '#/definitions/auth.TokenResponseDTO'
-      user:
-        $ref: '#/definitions/user.UserResponseDTO'
-    type: object
   auth.DataResponseDTO:
     description: Generic response with auth data
     properties:
       data:
-        $ref: '#/definitions/auth.AuthResponseDTO'
+        $ref: '#/definitions/auth.TokenResponseDTO'
       success:
         type: boolean
     type: object
@@ -65,13 +57,21 @@ definitions:
         minLength: 8
         type: string
       phone_number:
-        example: "+12125551234"
+        example: "0975234412"
         type: string
     required:
     - email
     - first_name
     - last_name
     - password
+    type: object
+  auth.RegisterSuccessDTO:
+    description: Registration success response data
+    properties:
+      data:
+        $ref: '#/definitions/auth.TokenResponseDTO'
+      success:
+        type: boolean
     type: object
   auth.TokenResponseDTO:
     description: Token response data
@@ -90,51 +90,7 @@ definitions:
         example: Bearer
         type: string
     type: object
-  user.CreateUserDTO:
-    description: Data for creating a new user
-    properties:
-      avatar_url:
-        example: https://example.com/avatar.jpg
-        type: string
-      date_of_birth:
-        example: "1990-01-01T00:00:00Z"
-        type: string
-      email:
-        example: user@example.com
-        type: string
-      first_name:
-        example: John
-        type: string
-      gender:
-        enum:
-        - 1
-        - 2
-        example: 1
-        type: integer
-      last_name:
-        example: Doe
-        type: string
-      password:
-        example: secureP@ssw0rd
-        minLength: 8
-        type: string
-      phone_number:
-        example: "+12125551234"
-        type: string
-    required:
-    - email
-    - first_name
-    - last_name
-    - password
-    type: object
-  user.DataResponseDTO:
-    properties:
-      data:
-        $ref: '#/definitions/user.UserResponseDTO'
-      success:
-        type: boolean
-    type: object
-  user.UserResponseDTO:
+  models.UserResponseDTO:
     description: User information returned in API responses
     properties:
       avatar_url:
@@ -183,6 +139,50 @@ definitions:
         example: "2023-01-01T12:34:56Z"
         type: string
     type: object
+  user.CreateUserDTO:
+    description: Data for creating a new user
+    properties:
+      avatar_url:
+        example: https://example.com/avatar.jpg
+        type: string
+      date_of_birth:
+        example: "1990-01-01T00:00:00Z"
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      first_name:
+        example: John
+        type: string
+      gender:
+        enum:
+        - 1
+        - 2
+        example: 1
+        type: integer
+      last_name:
+        example: Doe
+        type: string
+      password:
+        example: secureP@ssw0rd
+        minLength: 8
+        type: string
+      phone_number:
+        example: "+12125551234"
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  user.DataResponseDTO:
+    properties:
+      data:
+        $ref: '#/definitions/models.UserResponseDTO'
+      success:
+        type: boolean
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -218,7 +218,7 @@ paths:
       summary: User login
       tags:
       - auth
-  /auth/refresh:
+  /auth/refresh-token:
     post:
       consumes:
       - application/json
@@ -232,7 +232,11 @@ paths:
           $ref: '#/definitions/auth.RefreshTokenDTO'
       produces:
       - application/json
-      responses: {}
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auth.DataResponseDTO'
       summary: Refresh token
       tags:
       - auth
@@ -254,7 +258,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/auth.DataResponseDTO'
+            $ref: '#/definitions/auth.RegisterSuccessDTO'
       summary: User registration
       tags:
       - auth

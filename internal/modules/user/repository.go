@@ -3,20 +3,11 @@ package user
 import (
 	"errors"
 	"modular-fx-fiber/internal/shared/database"
+	"modular-fx-fiber/internal/shared/interfaces"
+	"modular-fx-fiber/internal/shared/models"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
-
-// Repository defines the data access methods for users
-type Repository interface {
-	Create(user *User) error
-	GetByID(id uuid.UUID) (*User, error)
-	GetByEmail(email string) (*User, error)
-	Update(user *User) error
-	Delete(id uuid.UUID) error
-	List(page, pageSize int) ([]User, int64, error)
-}
 
 // repository implements the Repository interface
 type repository struct {
@@ -24,18 +15,38 @@ type repository struct {
 }
 
 // NewRepository creates a new user repository
-func NewRepository(db *database.Database) Repository {
+func NewRepository(db *database.Database) interfaces.UserRepository {
 	return &repository{db: db.GetDB()}
 }
 
 // Create inserts a new user into the database
-func (r *repository) Create(user *User) error {
+func (r *repository) Create(user *models.User) error {
 	return r.db.Create(user).Error
 }
 
+// List retrieves a paginated list of users
+func (r *repository) List(page, pageSize int) ([]models.User, int64, error) {
+	var users []models.User
+	var totalCount int64
+
+	offset := (page - 1) * pageSize
+
+	// Get total count
+	if err := r.db.Model(&models.User{}).Count(&totalCount).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	if err := r.db.Offset(offset).Limit(pageSize).Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return users, totalCount, nil
+}
+
 // GetByID retrieves a user by ID
-func (r *repository) GetByID(id uuid.UUID) (*User, error) {
-	var user User
+func (r *repository) GetByID(id int64) (*models.User, error) {
+	var user models.User
 	if err := r.db.First(&user, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -46,40 +57,22 @@ func (r *repository) GetByID(id uuid.UUID) (*User, error) {
 }
 
 // GetByEmail retrieves a user by email
-func (r *repository) GetByEmail(email string) (*User, error) {
-	var user User
+func (r *repository) GetByEmail(email string) (*models.User, error) {
+	var user models.User
 	if err := r.db.First(&user, "email = ?", email).Error; err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 	}
 	return &user, nil
 }
 
 // Update updates an existing user
-func (r *repository) Update(user *User) error {
+func (r *repository) Update(user *models.User) error {
 	return r.db.Save(user).Error
 }
 
 // Delete soft-deletes a user
-func (r *repository) Delete(id uuid.UUID) error {
-	return r.db.Delete(&User{}, "id = ?", id).Error
-}
-
-// List retrieves a paginated list of users
-func (r *repository) List(page, pageSize int) ([]User, int64, error) {
-	var users []User
-	var totalCount int64
-
-	offset := (page - 1) * pageSize
-
-	// Get total count
-	if err := r.db.Model(&User{}).Count(&totalCount).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// Get paginated results
-	if err := r.db.Offset(offset).Limit(pageSize).Find(&users).Error; err != nil {
-		return nil, 0, err
-	}
-
-	return users, totalCount, nil
+func (r *repository) Delete(id int64) error {
+	return r.db.Delete(&models.User{}, "id = ?", id).Error
 }
