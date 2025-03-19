@@ -34,7 +34,7 @@ A highly scalable, modular REST API template built with Go Fiber and Uber FX for
 ### Creating a Migration
 
 ```
-make migrate-gen
+make migrate-create
 ```
 
 ### Running Migrations
