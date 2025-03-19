@@ -45,7 +45,7 @@ func (r *repository) List(page, pageSize int) ([]models.User, int64, error) {
 }
 
 // GetByID retrieves a user by ID
-func (r *repository) GetByID(id int64) (*models.User, error) {
+func (r *repository) GetByID(id uint64) (*models.User, error) {
 	var user models.User
 	if err := r.db.First(&user, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -73,6 +73,6 @@ func (r *repository) Update(user *models.User) error {
 }
 
 // Delete soft-deletes a user
-func (r *repository) Delete(id int64) error {
+func (r *repository) Delete(id uint64) error {
 	return r.db.Delete(&models.User{}, "id = ?", id).Error
 }

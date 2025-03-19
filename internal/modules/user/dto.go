@@ -14,7 +14,7 @@ type CreateUserDTO struct {
 	FirstName   string     `json:"first_name" validate:"required" example:"John"`
 	LastName    string     `json:"last_name" validate:"required" example:"Doe"`
 	DateOfBirth *time.Time `json:"date_of_birth,omitempty" example:"1990-01-01T00:00:00Z"`
-	Gender      *int8      `json:"gender,omitempty" validate:"omitempty,oneof=1 2" example:"1"`
+	Gender      *uint8     `json:"gender,omitempty" validate:"omitempty,oneof=1 2" example:"1"`
 	AvatarURL   *string    `json:"avatar_url,omitempty" validate:"omitempty,url" example:"https://example.com/avatar.jpg"`
 }
 
@@ -25,7 +25,7 @@ type UpdateUserDTO struct {
 	FirstName   *string    `json:"first_name,omitempty" example:"John"`
 	LastName    *string    `json:"last_name,omitempty" example:"Doe"`
 	DateOfBirth *time.Time `json:"date_of_birth,omitempty" example:"1990-01-01"`
-	Gender      *int8      `json:"gender,omitempty" validate:"omitempty,oneof=1 2" example:"1"`
+	Gender      *uint8     `json:"gender,omitempty" validate:"omitempty,oneof=1 2" example:"1"`
 	AvatarURL   *string    `json:"avatar_url,omitempty" validate:"omitempty,url" example:"https://example.com/avatar.jpg"`
 }
 

@@ -41,6 +41,6 @@ func (r *repository) DeleteRefreshToken(token string) error {
 }
 
 // DeleteUserRefreshTokens deletes all refresh tokens for a user
-func (r *repository) DeleteUserRefreshTokens(userID int64) error {
+func (r *repository) DeleteUserRefreshTokens(userID uint64) error {
 	return r.db.Where("user_id = ?", userID).Delete(&models.RefreshToken{}).Error
 }

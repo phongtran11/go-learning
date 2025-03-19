@@ -29,7 +29,7 @@ type RegisterDTO struct {
 	FirstName   string     `json:"first_name" validate:"required" example:"John"`
 	LastName    string     `json:"last_name" validate:"required" example:"Doe"`
 	DateOfBirth *time.Time `json:"date_of_birth,omitempty" example:"1990-01-01T00:00:00Z"`
-	Gender      *int8      `json:"gender,omitempty" validate:"omitempty,oneof=1 2" example:"1"`
+	Gender      *uint8     `json:"gender,omitempty" validate:"omitempty,oneof=1 2" example:"1"`
 }
 
 // RegisterSuccessDTO represents registration success response data

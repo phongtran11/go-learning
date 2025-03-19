@@ -73,7 +73,7 @@ func (s *service) Login(dto LoginDTO) (*TokenResponseDTO, error) {
 	if u.Status != models.USER_STATUS_ACTIVE {
 		s.logger.Info("Login attempt with inactive account",
 			zap.String("email", dto.Email),
-			zap.Int8("status", u.Status))
+			zap.Uint8("status", u.Status))
 		return nil, ErrUserNotActive
 	}
 
@@ -91,7 +91,7 @@ func (s *service) Login(dto LoginDTO) (*TokenResponseDTO, error) {
 	if err != nil {
 		s.logger.Error("Failed to update last login time",
 			zap.String("email", u.Email),
-			zap.Int64("user_id", u.ID),
+			zap.Uint64("user_id", u.ID),
 			zap.Error(err))
 		return nil, err
 	}
@@ -101,14 +101,14 @@ func (s *service) Login(dto LoginDTO) (*TokenResponseDTO, error) {
 	if err != nil {
 		s.logger.Error("Failed to generate tokens",
 			zap.String("email", u.Email),
-			zap.Int64("user_id", u.ID),
+			zap.Uint64("user_id", u.ID),
 			zap.Error(err))
 		return nil, err
 	}
 
 	s.logger.Info("User logged in successfully",
 		zap.String("email", u.Email),
-		zap.Int64("user_id", u.ID))
+		zap.Uint64("user_id", u.ID))
 	return tokens, nil
 }
 
@@ -153,14 +153,14 @@ func (s *service) Register(dto RegisterDTO) (*TokenResponseDTO, error) {
 	if err != nil {
 		s.logger.Error("Failed to generate tokens for new user",
 			zap.String("email", createdUser.Email),
-			zap.Int64("user_id", createdUser.ID),
+			zap.Uint64("user_id", createdUser.ID),
 			zap.Error(err))
 		return nil, err
 	}
 
 	s.logger.Info("User registered successfully",
 		zap.String("email", createdUser.Email),
-		zap.Int64("user_id", createdUser.ID))
+		zap.Uint64("user_id", createdUser.ID))
 	return tokens, nil
 }
 
@@ -197,21 +197,21 @@ func (s *service) RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error) {
 	user, err := s.userRepo.GetByID(savedToken.UserID)
 	if err != nil {
 		s.logger.Error("Failed to fetch user for refresh token",
-			zap.Int64("user_id", savedToken.UserID),
+			zap.Uint64("user_id", savedToken.UserID),
 			zap.Error(err))
 		return nil, err
 	}
 	if user == nil {
 		s.logger.Warn("Refresh token used for non-existent user",
-			zap.Int64("user_id", savedToken.UserID))
+			zap.Uint64("user_id", savedToken.UserID))
 		return nil, ErrInvalidRefreshToken
 	}
 
 	// Check if user is still active
 	if user.Status != models.USER_STATUS_ACTIVE {
 		s.logger.Warn("Refresh token used for inactive user",
-			zap.Int64("user_id", user.ID),
-			zap.Int8("status", user.Status))
+			zap.Uint64("user_id", user.ID),
+			zap.Uint8("status", user.Status))
 		return nil, ErrUserNotActive
 	}
 
@@ -227,12 +227,12 @@ func (s *service) RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error) {
 	tokens, err := s.generateTokens(user)
 	if err != nil {
 		s.logger.Error("Failed to generate new tokens",
-			zap.Int64("user_id", user.ID),
+			zap.Uint64("user_id", user.ID),
 			zap.Error(err))
 		return nil, err
 	}
 
-	s.logger.Info("Token refreshed successfully", zap.Int64("user_id", user.ID))
+	s.logger.Info("Token refreshed successfully", zap.Uint64("user_id", user.ID))
 	return tokens, nil
 }
 
