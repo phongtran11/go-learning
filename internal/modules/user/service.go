@@ -11,21 +11,19 @@ import (
 )
 
 var (
-	ErrUserNotFound       = errors.New("user not found")
 	ErrEmailAlreadyExists = errors.New("email already exists")
-	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
-// Service defines the business logic for users
-type UserService interface {
-	CreateUser(dto *CreateUserDTO) (*models.UserResponseDTO, error)
-}
+type (
+	service struct {
+		logger *logger.ZapLogger
+		repo   interfaces.UserRepository
+	}
 
-// service implements the Service interface
-type service struct {
-	logger *logger.ZapLogger
-	repo   interfaces.UserRepository
-}
+	UserService interface {
+		CreateUser(dto *CreateUserDTO) (*models.UserResponseDTO, error)
+	}
+)
 
 // NewService creates a new user service
 func NewService(

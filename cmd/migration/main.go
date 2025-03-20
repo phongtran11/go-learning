@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"modular-fx-fiber/internal/core/config"
+	"modular-fx-fiber/internal/shared/logger"
 	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -27,8 +28,9 @@ func init() {
 func Run() {
 	flag.Parse()
 
+	l := logger.NewZapLogger()
 	// Load configuration
-	cfg, err := config.NewConfig()
+	cfg, err := config.NewConfig(l)
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}

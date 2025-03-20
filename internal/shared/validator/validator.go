@@ -8,29 +8,30 @@ import (
 	"go.uber.org/zap"
 )
 
+type (
+	ErrorResponse struct {
+		Error       bool
+		FailedField string
+		Tag         string
+		Value       any
+	}
+
+	Validator struct {
+		validator *validator.Validate
+	}
+
+	GlobalErrorHandlerResponse struct {
+		Success bool   `json:"success" default:"false"`
+		Message string `json:"message" default:"Internal server error"`
+		Status  int    `json:"status" default:"500"`
+	}
+)
+
 // Create a custom validator instance
 var validate = validator.New()
 
-// Validator is a struct that holds our validator instance
-type Validator struct {
-	validator *validator.Validate
-}
-
-// NewValidator creates a new validator
-func NewValidator(l *logger.ZapLogger) *Validator {
-	err := validate.RegisterValidation("vn_phone", ValidateVNPhone)
-	if err != nil {
-		l.Warn("Failed to register custom validation", zap.Error(err))
-		return nil
-	}
-
-	return &Validator{
-		validator: validate,
-	}
-}
-
 // ValidateVNPhone validates a phone number
-func ValidateVNPhone(fl validator.FieldLevel) bool {
+func validateVNPhone(fl validator.FieldLevel) bool {
 	phone := fl.Field().String()
 
 	// Vietnamese phone number patterns:
@@ -43,39 +44,53 @@ func ValidateVNPhone(fl validator.FieldLevel) bool {
 	return vnPhoneRegex.MatchString(phone)
 }
 
-// ValidationError represents a single validation error
-type ValidationError struct {
-	Field string `json:"field"`
-	Tag   string `json:"tag"`
-	Value string `json:"value"`
-}
+// NewValidator creates a new validator
+func NewValidator(l *logger.ZapLogger) *Validator {
+	err := validate.RegisterValidation("vn_phone", validateVNPhone)
 
-// ValidationErrors is a slice of ValidationError
-type ValidationErrors []ValidationError
-
-// Error implements the error interface for ValidationErrors
-func (ve ValidationErrors) Error() string {
-	if len(ve) == 0 {
-		return "no validation errors"
+	if err != nil {
+		l.Warn("Failed to register custom validation", zap.Error(err))
+		return nil
 	}
-	return "validation failed"
+
+	return &Validator{
+		validator: validate,
+	}
 }
 
-// ValidateStruct validates a struct and returns formatted errors
-func (cv *Validator) ValidateStruct(s any) error {
-	if err := cv.validator.Struct(s); err != nil {
-		// If validation fails, return validation errors
-		var errors ValidationErrors
+func (cv *Validator) Validate(data any) []ErrorResponse {
+	validationErrors := []ErrorResponse{}
 
-		for _, err := range err.(validator.ValidationErrors) {
-			errors = append(errors, ValidationError{
-				Field: err.Field(),
-				Tag:   err.Tag(),
-				Value: err.Param(),
-			})
+	errs := validate.Struct(data)
+	if errs != nil {
+		for _, err := range errs.(validator.ValidationErrors) {
+			var elem ErrorResponse
+
+			elem.FailedField = err.Field()
+			elem.Tag = err.Tag()
+			elem.Value = err.Value()
+			elem.Error = true
+
+			validationErrors = append(validationErrors, elem)
 		}
-
-		return errors
 	}
-	return nil
+
+	if len(validationErrors) == 0 {
+		return nil
+	}
+
+	return validationErrors
+}
+
+func (cv *Validator) ParseErrorToString(errs []ErrorResponse) string {
+	var result string
+	if len(errs) == 0 {
+		return result
+	}
+	result = "Validation failed for the following fields:\n"
+	for _, err := range errs {
+		result += err.FailedField + " " + err.Tag + " " + err.Value.(string) + "\n"
+	}
+
+	return result
 }

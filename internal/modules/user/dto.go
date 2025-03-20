@@ -46,7 +46,9 @@ type PaginatedUsersResponse struct {
 	TotalPages int                      `json:"total_pages" example:"5"`
 }
 
-type DataResponseDTO struct {
+// CreateUserSuccessResponseDTO represents a successful user creation response
+// @Description Response structure for successful user creation requests
+type CreateUserSuccessResponseDTO struct {
 	Success bool                    `json:"success"`
 	Data    *models.UserResponseDTO `json:"data"`
 }

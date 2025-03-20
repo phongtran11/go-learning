@@ -14,8 +14,8 @@ type repository struct {
 }
 
 // NewRepository creates a new auth repository
-func NewRepository(db *database.Database) interfaces.RefreshTokenRepository {
-	return &repository{db: db.DB}
+func NewRepository(db database.Database) interfaces.RefreshTokenRepository {
+	return &repository{db: db.GetDB()}
 }
 
 // SaveRefreshToken saves a refresh token to the database

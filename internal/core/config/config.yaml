@@ -1,8 +1,26 @@
+# Base configuration file
 app:
+  port: 8080
   name: "Modular Fiber API"
-  port: "8080"
+  env: "development"
+
+db:
+  host: "localhost"
+  port: "5432"
+  user: "postgres"
+  password: "postgres"
+  name: "postgres"
+  ssl: "disable"
 
 jwt:
+  secret: "dev-secret-key-change-in-production"
   access_expiry_minutes: 60
   refresh_expiry_days: 7
 
+mail:
+  from_addr: "noreply@example.com"
+  from_name: "Your Application"
+  smtp_server: "smtp.example.com"
+  smtp_port: 587
+  smtp_username: "smtp_user"
+  smtp_password: "smtp_password"

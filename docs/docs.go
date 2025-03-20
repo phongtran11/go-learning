@@ -51,7 +51,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/auth.DataResponseDTO"
+                            "$ref": "#/definitions/auth.LoginSuccessResponseDTO"
                         }
                     }
                 }
@@ -85,7 +85,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/auth.DataResponseDTO"
+                            "$ref": "#/definitions/auth.RefreshTokenSuccessResponseDTO"
                         }
                     }
                 }
@@ -119,7 +119,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/auth.RegisterSuccessDTO"
+                            "$ref": "#/definitions/auth.RegisterSuccessResponseDTO"
                         }
                     }
                 }
@@ -153,7 +153,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/user.DataResponseDTO"
+                            "$ref": "#/definitions/user.CreateUserSuccessResponseDTO"
                         }
                     }
                 }
@@ -161,18 +161,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.DataResponseDTO": {
-            "description": "Generic response with auth data",
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/auth.TokenResponseDTO"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
         "auth.LoginDTO": {
             "description": "Login credentials",
             "type": "object",
@@ -192,6 +180,18 @@ const docTemplate = `{
                 }
             }
         },
+        "auth.LoginSuccessResponseDTO": {
+            "description": "Response structure for successful login requests",
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/auth.TokenResponseDTO"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "auth.RefreshTokenDTO": {
             "description": "Refresh token request data",
             "type": "object",
@@ -202,6 +202,18 @@ const docTemplate = `{
                 "refresh_token": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
+        "auth.RefreshTokenSuccessResponseDTO": {
+            "description": "Response structure for successful token refresh requests",
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/auth.TokenResponseDTO"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         },
@@ -250,8 +262,8 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.RegisterSuccessDTO": {
-            "description": "Registration success response data",
+        "auth.RegisterSuccessResponseDTO": {
+            "description": "Response structure for successful registration requests",
             "type": "object",
             "properties": {
                 "data": {
@@ -400,7 +412,8 @@ const docTemplate = `{
                 }
             }
         },
-        "user.DataResponseDTO": {
+        "user.CreateUserSuccessResponseDTO": {
+            "description": "Response structure for successful user creation requests",
             "type": "object",
             "properties": {
                 "data": {

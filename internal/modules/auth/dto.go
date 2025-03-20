@@ -32,22 +32,29 @@ type RegisterDTO struct {
 	Gender      *uint8     `json:"gender,omitempty" validate:"omitempty,oneof=1 2" example:"1"`
 }
 
-// RegisterSuccessDTO represents registration success response data
-// @Description Registration success response data
-type RegisterSuccessDTO struct {
-	Success bool              `json:"success"`
-	Data    *TokenResponseDTO `json:"data"`
-}
-
 // RefreshTokenDTO represents refresh token request data
 // @Description Refresh token request data
 type RefreshTokenDTO struct {
 	RefreshToken string `json:"refresh_token"   validate:"required"    example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 }
 
-// DataResponseDTO represents a generic response with auth data
-// @Description Generic response with auth data
-type DataResponseDTO struct {
+// LoginSuccessResponseDTO represents a successful login response
+// @Description Response structure for successful login requests
+type LoginSuccessResponseDTO struct {
+	Success bool              `json:"success"`
+	Data    *TokenResponseDTO `json:"data"`
+}
+
+// RegisterSuccessResponseDTO represents a successful registration response
+// @Description Response structure for successful registration requests
+type RegisterSuccessResponseDTO struct {
+	Success bool              `json:"success"`
+	Data    *TokenResponseDTO `json:"data"`
+}
+
+// RefreshTokenSuccessResponseDTO represents a successful token refresh response
+// @Description Response structure for successful token refresh requests
+type RefreshTokenSuccessResponseDTO struct {
 	Success bool              `json:"success"`
 	Data    *TokenResponseDTO `json:"data"`
 }

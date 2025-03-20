@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"os"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -9,22 +11,26 @@ type ZapLogger struct {
 	*zap.Logger
 }
 
-func NewZapLogger() (*ZapLogger, error) {
-	cfg := zap.Config{
-		Encoding:         "json",
-		Level:            zap.NewAtomicLevelAt(zapcore.DebugLevel),
-		OutputPaths:      []string{"stdout", "app.log"},
-		ErrorOutputPaths: []string{"stderr"},
-		EncoderConfig: zapcore.EncoderConfig{
-			MessageKey:  "message",
-			LevelKey:    "level",
-			TimeKey:     "time",
-			EncodeLevel: zapcore.CapitalLevelEncoder,
-			EncodeTime:  zapcore.ISO8601TimeEncoder,
-		},
-		DisableStacktrace: true,
+func NewZapLogger() *ZapLogger {
+	config := zapcore.EncoderConfig{
+		MessageKey:    "msg",
+		LevelKey:      "level",
+		EncodeLevel:   zapcore.CapitalLevelEncoder,
+		TimeKey:       "ts",
+		EncodeTime:    zapcore.ISO8601TimeEncoder,
+		CallerKey:     "caller",
+		EncodeCaller:  zapcore.ShortCallerEncoder,
+		StacktraceKey: "stack_trace",
 	}
-	logger, error := cfg.Build()
+	core := zapcore.NewCore(
+		zapcore.NewJSONEncoder(config),
+		zapcore.Lock(os.Stdout),
+		zap.DebugLevel,
+	)
+	zapInstance := zap.New(core,
+		zap.AddCaller(),
+		zap.AddStacktrace(zapcore.ErrorLevel),
+	)
 
-	return &ZapLogger{logger}, error
+	return &ZapLogger{zapInstance}
 }

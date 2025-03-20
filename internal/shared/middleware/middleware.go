@@ -8,43 +8,42 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
+	"go.uber.org/zap"
 )
 
-// Middleware contains application middlewares
-type Middleware struct {
-	config *config.Config
-	logger *logger.ZapLogger
-}
+type (
+	Middleware interface {
+		JWT() fiber.Handler
+	}
+
+	middleware struct {
+		config *config.Config
+		logger *logger.ZapLogger
+	}
+)
 
 // NewMiddleware creates a new middleware instance
-func NewMiddleware(config *config.Config,
-	logger *logger.ZapLogger) *Middleware {
-	return &Middleware{
+func NewMiddleware(config *config.Config, logger *logger.ZapLogger) Middleware {
+	return &middleware{
 		config: config,
 		logger: logger,
 	}
 }
 
 // JWT middleware for protecting routes
-func (m *Middleware) JWT() fiber.Handler {
+func (m *middleware) JWT() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Get authorization header
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"success": false,
-				"error":   "Missing authorization header",
-			})
+			return fiber.NewError(fiber.StatusUnauthorized, "Missing authorization header")
 		}
 
 		// Check if the header has the right format
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"success": false,
-				"error":   "Invalid authorization format",
-			})
+			return fiber.NewError(fiber.StatusUnauthorized, "Invalid authorization format")
 		}
 
 		// Get the token
@@ -63,37 +62,25 @@ func (m *Middleware) JWT() fiber.Handler {
 
 		// Handle parsing errors
 		if err != nil {
-			m.logger.Error("JWT Error: " + err.Error())
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"success": false,
-				"error":   "Invalid or expired token",
-			})
+			m.logger.Error("JWT Error: ", zap.Error(err))
+			return fiber.NewError(fiber.StatusUnauthorized, "Invalid or expired token")
 		}
 
 		// Check if token is valid
 		if !token.Valid {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"success": false,
-				"error":   "Invalid token",
-			})
+			return fiber.NewError(fiber.StatusUnauthorized, "Invalid token")
 		}
 
 		// Extract claims
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"success": false,
-				"error":   "Invalid token claims",
-			})
+			return fiber.NewError(fiber.StatusUnauthorized, "Invalid token claims")
 		}
 
 		// Check token expiration
 		if exp, ok := claims["exp"].(float64); ok {
 			if time.Now().Unix() > int64(exp) {
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-					"success": false,
-					"error":   "Token expired",
-				})
+				return fiber.NewError(fiber.StatusUnauthorized, "Token expired")
 			}
 		}
 

@@ -13,12 +13,18 @@ import (
 )
 
 // Database represents the database connection
-type Database struct {
-	DB *gorm.DB
-}
+type (
+	database struct {
+		DB *gorm.DB
+	}
+
+	Database interface {
+		GetDB() *gorm.DB
+	}
+)
 
 // NewDatabase creates a new database connection
-func NewDatabase(config *config.Config) (*Database, error) {
+func NewDatabase(config *config.Config) (Database, error) {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
 		config.DB.HOST, config.DB.USER, config.DB.PASSWORD, config.DB.NAME, config.DB.PORT, config.DB.SSL)
@@ -60,12 +66,12 @@ func NewDatabase(config *config.Config) (*Database, error) {
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	return &Database{
+	return &database{
 		DB: db,
 	}, nil
 }
 
 // GetDB returns the GORM database instance
-func (d *Database) GetDB() *gorm.DB {
+func (d *database) GetDB() *gorm.DB {
 	return d.DB
 }

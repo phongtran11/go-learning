@@ -12,5 +12,4 @@ var Module = fx.Options(
 		NewService,
 		NewRepository,
 	),
-	fx.Invoke(Register),
 )

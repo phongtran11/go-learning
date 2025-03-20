@@ -5,19 +5,22 @@ import (
 	"modular-fx-fiber/internal/shared/middleware"
 )
 
-type UserRoutes struct {
-	handlers *Handlers
-}
+type (
+	userRoutes struct {
+		handlers *Handlers
+	}
+
+	UserRoutes interface{}
+)
 
 // NewUserRoutes creates new user routes
-func NewUserRoutes(h *Handlers) *UserRoutes {
-
-	return &UserRoutes{
+func NewUserRoutes(h *Handlers) UserRoutes {
+	return &userRoutes{
 		handlers: h,
 	}
 }
 
-func Register(s *server.Server, h *Handlers, m *middleware.Middleware) {
-	group := s.App.Group("api/users", m.JWT())
+func Register(s server.Server, m middleware.Middleware, h Handlers) {
+	group := s.GetApp().Group("api/users", m.JWT())
 	group.Post("/", h.Create)
 }

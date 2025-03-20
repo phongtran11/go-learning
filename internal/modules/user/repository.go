@@ -15,7 +15,7 @@ type repository struct {
 }
 
 // NewRepository creates a new user repository
-func NewRepository(db *database.Database) interfaces.UserRepository {
+func NewRepository(db database.Database) interfaces.UserRepository {
 	return &repository{db: db.GetDB()}
 }
 

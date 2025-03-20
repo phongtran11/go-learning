@@ -21,23 +21,23 @@ var (
 	ErrUserNotFound        = errors.New("user not found")
 )
 
-// RefreshTokenService defines the business logic for authentication
-type RefreshTokenService interface {
-	Login(dto LoginDTO) (*TokenResponseDTO, error)
-	Register(dto RegisterDTO) (*TokenResponseDTO, error)
-	RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error)
-}
+type (
+	AuthService interface {
+		Login(dto LoginDTO) (*TokenResponseDTO, error)
+		Register(dto RegisterDTO) (*TokenResponseDTO, error)
+		RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error)
+	}
 
-// service implements the Service interface
-type service struct {
-	config *config.Config
-	logger *logger.ZapLogger
+	authService struct {
+		config *config.Config
+		logger *logger.ZapLogger
 
-	userService user.UserService
+		userService user.UserService
 
-	userRepo interfaces.UserRepository
-	authRepo interfaces.RefreshTokenRepository
-}
+		userRepo interfaces.UserRepository
+		authRepo interfaces.RefreshTokenRepository
+	}
+)
 
 // NewService creates a new auth service
 func NewService(
@@ -46,8 +46,8 @@ func NewService(
 	userService user.UserService,
 	userRepo interfaces.UserRepository,
 	authRepo interfaces.RefreshTokenRepository,
-) RefreshTokenService {
-	return &service{
+) AuthService {
+	return &authService{
 		config:      config,
 		logger:      logger,
 		userService: userService,
@@ -57,7 +57,7 @@ func NewService(
 }
 
 // Login authenticates a user and returns tokens
-func (s *service) Login(dto LoginDTO) (*TokenResponseDTO, error) {
+func (s *authService) Login(dto LoginDTO) (*TokenResponseDTO, error) {
 	// Get user by email
 	u, err := s.userRepo.GetByEmail(dto.Email)
 	if err != nil {
@@ -113,7 +113,7 @@ func (s *service) Login(dto LoginDTO) (*TokenResponseDTO, error) {
 }
 
 // Register creates a new user and returns tokens
-func (s *service) Register(dto RegisterDTO) (*TokenResponseDTO, error) {
+func (s *authService) Register(dto RegisterDTO) (*TokenResponseDTO, error) {
 	// Convert RegisterDTO to user.CreateUserDTO
 	createUserDto := &user.CreateUserDTO{
 		Email:       dto.Email,
@@ -165,7 +165,7 @@ func (s *service) Register(dto RegisterDTO) (*TokenResponseDTO, error) {
 }
 
 // RefreshToken validates a refresh token and issues new tokens
-func (s *service) RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error) {
+func (s *authService) RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error) {
 	// Get refresh token from database
 	savedToken, err := s.authRepo.GetRefreshToken(dto.RefreshToken)
 	if err != nil {
@@ -237,7 +237,7 @@ func (s *service) RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error) {
 }
 
 // generateTokens generates JWT access and refresh tokens
-func (s *service) generateTokens(user *models.User) (*TokenResponseDTO, error) {
+func (s *authService) generateTokens(user *models.User) (*TokenResponseDTO, error) {
 	// Get JWT config
 	jwtSecret := []byte(s.config.JWT.Secret)
 	accessTokenExpiry := time.Duration(s.config.JWT.AccessExpiryMinutes) * time.Minute
@@ -298,4 +298,8 @@ func (s *service) generateTokens(user *models.User) (*TokenResponseDTO, error) {
 		ExpiresIn:    uint(accessTokenExpiry.Seconds()),
 		TokenType:    "Bearer",
 	}, nil
+}
+
+func (s *authService) VerifyEmail(token string) error {
+	return s.authRepo.DeleteRefreshToken(token)
 }

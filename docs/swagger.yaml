@@ -1,13 +1,5 @@
 basePath: /api
 definitions:
-  auth.DataResponseDTO:
-    description: Generic response with auth data
-    properties:
-      data:
-        $ref: '#/definitions/auth.TokenResponseDTO'
-      success:
-        type: boolean
-    type: object
   auth.LoginDTO:
     description: Login credentials
     properties:
@@ -22,6 +14,14 @@ definitions:
     - email
     - password
     type: object
+  auth.LoginSuccessResponseDTO:
+    description: Response structure for successful login requests
+    properties:
+      data:
+        $ref: '#/definitions/auth.TokenResponseDTO'
+      success:
+        type: boolean
+    type: object
   auth.RefreshTokenDTO:
     description: Refresh token request data
     properties:
@@ -30,6 +30,14 @@ definitions:
         type: string
     required:
     - refresh_token
+    type: object
+  auth.RefreshTokenSuccessResponseDTO:
+    description: Response structure for successful token refresh requests
+    properties:
+      data:
+        $ref: '#/definitions/auth.TokenResponseDTO'
+      success:
+        type: boolean
     type: object
   auth.RegisterDTO:
     description: Registration data
@@ -65,8 +73,8 @@ definitions:
     - last_name
     - password
     type: object
-  auth.RegisterSuccessDTO:
-    description: Registration success response data
+  auth.RegisterSuccessResponseDTO:
+    description: Response structure for successful registration requests
     properties:
       data:
         $ref: '#/definitions/auth.TokenResponseDTO'
@@ -176,7 +184,8 @@ definitions:
     - last_name
     - password
     type: object
-  user.DataResponseDTO:
+  user.CreateUserSuccessResponseDTO:
+    description: Response structure for successful user creation requests
     properties:
       data:
         $ref: '#/definitions/models.UserResponseDTO'
@@ -214,7 +223,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/auth.DataResponseDTO'
+            $ref: '#/definitions/auth.LoginSuccessResponseDTO'
       summary: User login
       tags:
       - auth
@@ -236,7 +245,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/auth.DataResponseDTO'
+            $ref: '#/definitions/auth.RefreshTokenSuccessResponseDTO'
       summary: Refresh token
       tags:
       - auth
@@ -258,7 +267,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/auth.RegisterSuccessDTO'
+            $ref: '#/definitions/auth.RegisterSuccessResponseDTO'
       summary: User registration
       tags:
       - auth
@@ -280,7 +289,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/user.DataResponseDTO'
+            $ref: '#/definitions/user.CreateUserSuccessResponseDTO'
       summary: Create a new user
       tags:
       - users

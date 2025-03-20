@@ -30,8 +30,7 @@ func NewSwagger() *Swagger {
 }
 
 // Register registers swagger routes
-func Register(s *server.Server, h *Swagger) {
-
+func Register(s server.Server, h *Swagger) {
 	// Setup swagger route
-	s.App.Get(h.config.BasePath+"/*", swagger.HandlerDefault)
+	s.GetApp().Get(h.config.BasePath+"/*", swagger.HandlerDefault)
 }
