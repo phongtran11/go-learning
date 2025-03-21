@@ -18,7 +18,7 @@ include_dir = ["cmd", "internal"]
 # Exclude files or directories from watching (relative to root)
 exclude_dir = ["tmp", ".git", "vendor"]
 # Watch these file extensions for changes.
-include_ext = ["go", "yaml", "yml", "toml"]
+include_ext = ["go", "yaml", "yml", "toml", "html"]
 # Ignore these file extensions or directories
 exclude_file = []
 # Only watch these files. Empty means watch all files.

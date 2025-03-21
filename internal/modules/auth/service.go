@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"modular-fx-fiber/internal/core/config"
+	"modular-fx-fiber/internal/modules/mailer"
 	"modular-fx-fiber/internal/modules/user"
 	"modular-fx-fiber/internal/shared/interfaces"
 	"modular-fx-fiber/internal/shared/logger"
@@ -26,6 +27,7 @@ type (
 		Login(dto LoginDTO) (*TokenResponseDTO, error)
 		Register(dto RegisterDTO) (*TokenResponseDTO, error)
 		RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error)
+		VerifyEmail(token string) error
 	}
 
 	authService struct {
@@ -33,6 +35,7 @@ type (
 		logger *logger.ZapLogger
 
 		userService user.UserService
+		gmailMailer mailer.GmailMailer
 
 		userRepo interfaces.UserRepository
 		authRepo interfaces.RefreshTokenRepository
@@ -44,6 +47,7 @@ func NewService(
 	config *config.Config,
 	logger *logger.ZapLogger,
 	userService user.UserService,
+	gmailMailer mailer.GmailMailer,
 	userRepo interfaces.UserRepository,
 	authRepo interfaces.RefreshTokenRepository,
 ) AuthService {
@@ -51,6 +55,7 @@ func NewService(
 		config:      config,
 		logger:      logger,
 		userService: userService,
+		gmailMailer: gmailMailer,
 		userRepo:    userRepo,
 		authRepo:    authRepo,
 	}
@@ -300,6 +305,20 @@ func (s *authService) generateTokens(user *models.User) (*TokenResponseDTO, erro
 	}, nil
 }
 
+type MailData struct {
+	Name string
+	Code int
+}
+
 func (s *authService) VerifyEmail(token string) error {
-	return s.authRepo.DeleteRefreshToken(token)
+	err := s.gmailMailer.SendTemplatedEmail("phongtran11.tt@gmail.com", "Verify Email", "send_confirm_email_code", map[string]any{
+		"Name": "phong",
+		"Code": 1234,
+	})
+	if err != nil {
+		s.logger.Error("Failed to send email", zap.Error(err))
+		return err
+	}
+
+	return nil
 }

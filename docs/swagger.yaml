@@ -271,6 +271,25 @@ paths:
       summary: User registration
       tags:
       - auth
+  /auth/register/verify-email:
+    post:
+      consumes:
+      - application/json
+      description: Verify user email address
+      parameters:
+      - description: Verification token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Verify email
+      tags:
+      - auth
   /users:
     post:
       consumes:

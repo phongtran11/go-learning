@@ -3,6 +3,7 @@ package main
 import (
 	"modular-fx-fiber/internal/core"
 	"modular-fx-fiber/internal/modules/auth"
+	"modular-fx-fiber/internal/modules/mailer"
 	"modular-fx-fiber/internal/modules/user"
 	"modular-fx-fiber/internal/shared"
 
@@ -33,5 +34,6 @@ func main() {
 		// Feature modules
 		user.Module,
 		auth.Module,
+		mailer.Module,
 	).Run()
 }

@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"errors"
-	"modular-fx-fiber/internal/modules/user"
 	"modular-fx-fiber/internal/shared/logger"
 	"modular-fx-fiber/internal/shared/validator"
 
@@ -48,10 +46,7 @@ func (h *handlers) Login(c *fiber.Ctx) error {
 
 	// Parse request body
 	if err := c.BodyParser(&loginDto); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"error":   err.Error(),
-		})
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	// Validate request body
@@ -63,22 +58,8 @@ func (h *handlers) Login(c *fiber.Ctx) error {
 
 	// Login user
 	tokens, err := h.service.Login(loginDto)
-	if errors.Is(err, ErrInvalidCredentials) {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"success": false,
-			"error":   "Invalid email or password",
-		})
-	} else if errors.Is(err, ErrUserNotActive) {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"success": false,
-			"error":   "Your account is not active",
-		})
-	} else if err != nil {
-		h.logger.Error(err.Error())
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   "Internal server error",
-		})
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 	}
 
 	// Return response
@@ -102,10 +83,7 @@ func (h *handlers) Register(c *fiber.Ctx) error {
 
 	// Parse request body
 	if err := c.BodyParser(&registerDto); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"error":   err.Error(),
-		})
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	// Validate request body
@@ -118,17 +96,7 @@ func (h *handlers) Register(c *fiber.Ctx) error {
 	// Register user
 	tokens, err := h.service.Register(registerDto)
 	if err != nil {
-		if errors.Is(err, user.ErrEmailAlreadyExists) {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"error":   "Email already exists",
-			})
-		}
-		h.logger.Error(err.Error())
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   "Internal server error",
-		})
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	// Return response
@@ -152,10 +120,7 @@ func (h *handlers) RefreshToken(c *fiber.Ctx) error {
 
 	// Parse request body
 	if err := c.BodyParser(&refreshDto); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"error":   err.Error(),
-		})
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	// Validate request body
@@ -167,17 +132,8 @@ func (h *handlers) RefreshToken(c *fiber.Ctx) error {
 
 	// Refresh token
 	tokens, err := h.service.RefreshToken(refreshDto)
-	if errors.Is(err, ErrInvalidRefreshToken) {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"success": false,
-			"error":   "Invalid or expired refresh token",
-		})
-	} else if err != nil {
-		h.logger.Error(err.Error())
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   "Internal server error",
-		})
+	if err != nil {
+		fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	// Return response
@@ -187,6 +143,15 @@ func (h *handlers) RefreshToken(c *fiber.Ctx) error {
 	})
 }
 
+// VerifyEmail handles email verification
+// @Summary Verify email
+// @Description Verify user email address
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200
+// @Router /auth/register/verify-email [post]
 func (h *handlers) VerifyEmail(c *fiber.Ctx) error {
+	h.service.VerifyEmail("test")
 	return nil
 }

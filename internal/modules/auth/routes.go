@@ -23,12 +23,12 @@ func NewAuthRoutes(handlers Handlers, middleware middleware.Middleware) AuthRout
 }
 
 // Register registers auth routes
-func Register(server server.Server, routes authRoutes) {
+func Register(server server.Server, h Handlers) {
 	a := server.GetApp()
 	group := a.Group("api/auth")
 
-	group.Post("/login", routes.handlers.Login)
-	group.Post("/register", routes.handlers.Register)
-	group.Post("/register/verify-email", routes.handlers.VerifyEmail)
-	group.Post("/refresh-token", routes.handlers.RefreshToken)
+	group.Post("/login", h.Login)
+	group.Post("/register", h.Register)
+	group.Post("/register/verify-email", h.VerifyEmail)
+	group.Post("/refresh-token", h.RefreshToken)
 }

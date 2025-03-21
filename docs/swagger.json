@@ -119,6 +119,35 @@
                 }
             }
         },
+        "/auth/register/verify-email": {
+            "post": {
+                "description": "Verify user email address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Verify email",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Verification token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/users": {
             "post": {
                 "description": "Create a new user with the provided details",
