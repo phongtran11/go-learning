@@ -149,9 +149,39 @@ func (h *handlers) RefreshToken(c *fiber.Ctx) error {
 // @Tags auth
 // @Accept json
 // @Produce json
+// @Security BearerAuth
+// @Param code body VerifyEmailDTO true "Verification code"
 // @Success 200
 // @Router /auth/register/verify-email [post]
 func (h *handlers) VerifyEmail(c *fiber.Ctx) error {
-	h.service.VerifyEmail("test")
-	return nil
+	var verifyDto VerifyEmailDTO
+
+	// Parse request body
+	if err := c.BodyParser(&verifyDto); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	// Validate request body
+	errs := h.validator.Validate(verifyDto)
+	if errs != nil {
+		err := h.validator.ParseErrorToString(errs)
+		return fiber.NewError(fiber.StatusBadRequest, err)
+	}
+
+	// get user_id from local
+	userId := c.Locals("user_id")
+	userIdFloat64, ok := userId.(float64)
+	if !ok {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid user id")
+	}
+
+	// check verification code
+	err := h.service.VerifyEmail(verifyDto, uint64(userIdFloat64))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	// Return response
+	return c.SendStatus(fiber.StatusOK)
+
 }

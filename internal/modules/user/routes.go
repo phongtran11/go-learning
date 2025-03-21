@@ -21,6 +21,7 @@ func NewUserRoutes(h *Handlers) UserRoutes {
 }
 
 func Register(s server.Server, m middleware.Middleware, h Handlers) {
-	group := s.GetApp().Group("api/users", m.JWT())
+	group := s.GetApp().Group("api/users")
+	group.Get("/", h.ListUsers)
 	group.Post("/", h.Create)
 }

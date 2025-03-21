@@ -127,6 +127,11 @@ const docTemplate = `{
         },
         "/auth/register/verify-email": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Verify user email address",
                 "consumes": [
                     "application/json"
@@ -140,11 +145,13 @@ const docTemplate = `{
                 "summary": "Verify email",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Verification token",
-                        "name": "token",
-                        "in": "query",
-                        "required": true
+                        "description": "Verification code",
+                        "name": "code",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.VerifyEmailDTO"
+                        }
                     }
                 ],
                 "responses": {
@@ -155,6 +162,41 @@ const docTemplate = `{
             }
         },
         "/users": {
+            "get": {
+                "description": "List users with pagination",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "List users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/user.ListUsersSuccessResponseDTO"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create a new user with the provided details",
                 "consumes": [
@@ -326,6 +368,20 @@ const docTemplate = `{
                 }
             }
         },
+        "auth.VerifyEmailDTO": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "maxLength": 6,
+                    "minLength": 6,
+                    "example": "123456"
+                }
+            }
+        },
         "models.UserResponseDTO": {
             "description": "User information returned in API responses",
             "type": "object",
@@ -389,6 +445,10 @@ const docTemplate = `{
                 "updated_at": {
                     "type": "string",
                     "example": "2023-01-01T12:34:56Z"
+                },
+                "verify_email_code": {
+                    "type": "string",
+                    "example": "123456"
                 }
             }
         },
@@ -450,6 +510,45 @@ const docTemplate = `{
                 },
                 "success": {
                     "type": "boolean"
+                }
+            }
+        },
+        "user.ListUsersSuccessResponseDTO": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/user.PaginatedUsersResponse"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "user.PaginatedUsersResponse": {
+            "description": "Paginated list of users",
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.UserResponseDTO"
+                    }
+                },
+                "page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "page_size": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "total_count": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "total_pages": {
+                    "type": "integer",
+                    "example": 5
                 }
             }
         }

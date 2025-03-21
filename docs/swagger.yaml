@@ -98,6 +98,16 @@ definitions:
         example: Bearer
         type: string
     type: object
+  auth.VerifyEmailDTO:
+    properties:
+      code:
+        example: "123456"
+        maxLength: 6
+        minLength: 6
+        type: string
+    required:
+    - code
+    type: object
   models.UserResponseDTO:
     description: User information returned in API responses
     properties:
@@ -146,6 +156,9 @@ definitions:
       updated_at:
         example: "2023-01-01T12:34:56Z"
         type: string
+      verify_email_code:
+        example: "123456"
+        type: string
     type: object
   user.CreateUserDTO:
     description: Data for creating a new user
@@ -191,6 +204,33 @@ definitions:
         $ref: '#/definitions/models.UserResponseDTO'
       success:
         type: boolean
+    type: object
+  user.ListUsersSuccessResponseDTO:
+    properties:
+      data:
+        $ref: '#/definitions/user.PaginatedUsersResponse'
+      success:
+        type: boolean
+    type: object
+  user.PaginatedUsersResponse:
+    description: Paginated list of users
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/models.UserResponseDTO'
+        type: array
+      page:
+        example: 1
+        type: integer
+      page_size:
+        example: 10
+        type: integer
+      total_count:
+        example: 42
+        type: integer
+      total_pages:
+        example: 5
+        type: integer
     type: object
 host: localhost:8080
 info:
@@ -277,20 +317,46 @@ paths:
       - application/json
       description: Verify user email address
       parameters:
-      - description: Verification token
-        in: query
-        name: token
+      - description: Verification code
+        in: body
+        name: code
         required: true
-        type: string
+        schema:
+          $ref: '#/definitions/auth.VerifyEmailDTO'
       produces:
       - application/json
       responses:
         "200":
           description: OK
+      security:
+      - BearerAuth: []
       summary: Verify email
       tags:
       - auth
   /users:
+    get:
+      consumes:
+      - application/json
+      description: List users with pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.ListUsersSuccessResponseDTO'
+      summary: List users
+      tags:
+      - users
     post:
       consumes:
       - application/json

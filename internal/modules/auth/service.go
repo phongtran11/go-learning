@@ -20,6 +20,7 @@ var (
 	ErrInvalidRefreshToken = errors.New("invalid or expired refresh token")
 	ErrUserNotActive       = errors.New("user is not active")
 	ErrUserNotFound        = errors.New("user not found")
+	ErrInvalidVerifyCode   = errors.New("invalid verification code")
 )
 
 type (
@@ -27,7 +28,7 @@ type (
 		Login(dto LoginDTO) (*TokenResponseDTO, error)
 		Register(dto RegisterDTO) (*TokenResponseDTO, error)
 		RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error)
-		VerifyEmail(token string) error
+		VerifyEmail(token VerifyEmailDTO, userId uint64) error
 	}
 
 	authService struct {
@@ -305,20 +306,46 @@ func (s *authService) generateTokens(user *models.User) (*TokenResponseDTO, erro
 	}, nil
 }
 
-type MailData struct {
-	Name string
-	Code int
-}
+func (s *authService) VerifyEmail(ved VerifyEmailDTO, userId uint64) error {
+	// Get user by ID
+	user, err := s.userRepo.GetByID(uint64(userId))
 
-func (s *authService) VerifyEmail(token string) error {
-	err := s.gmailMailer.SendTemplatedEmail("phongtran11.tt@gmail.com", "Verify Email", "send_confirm_email_code", map[string]any{
-		"Name": "phong",
-		"Code": 1234,
-	})
+	// Check if there was an error
 	if err != nil {
-		s.logger.Error("Failed to send email", zap.Error(err))
+		s.logger.Error("Failed to fetch user by ID", zap.Uint64("user_id", userId), zap.Error(err))
 		return err
 	}
 
+	// Check if user exists
+	if user == nil {
+		s.logger.Warn("User not found", zap.Uint64("user_id", userId))
+		return ErrUserNotFound
+	}
+
+	// Check if user is already verified
+	if user.EmailVerified {
+		s.logger.Warn("User already verified", zap.Uint64("user_id", userId))
+		return nil
+	}
+
+	// Check if verification code is correct
+	if user.VerifyEmailCode != ved.Code {
+		s.logger.Warn("Invalid verification code", zap.Uint64("user_id", userId), zap.Any("code", ved.Code))
+		return ErrInvalidVerifyCode
+	}
+
+	// Update user
+	user.EmailVerified = true
+	user.VerifyEmailCode = nil
+	err = s.userRepo.Update(user)
+
+	// Check if there was an error
+	if err != nil {
+		s.logger.Error("Failed to update user", zap.Uint64("user_id", userId), zap.Error(err))
+		return err
+	}
+
+	// Log success
+	s.logger.Info("User email verified", zap.Uint64("user_id", userId))
 	return nil
 }

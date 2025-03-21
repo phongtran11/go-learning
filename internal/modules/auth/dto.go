@@ -38,6 +38,10 @@ type RefreshTokenDTO struct {
 	RefreshToken string `json:"refresh_token"   validate:"required"    example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 }
 
+type VerifyEmailDTO struct {
+	Code *string `json:"code" validate:"required,min=6,max=6,alphanum" example:"123456"`
+}
+
 // LoginSuccessResponseDTO represents a successful login response
 // @Description Response structure for successful login requests
 type LoginSuccessResponseDTO struct {
@@ -57,4 +61,8 @@ type RegisterSuccessResponseDTO struct {
 type RefreshTokenSuccessResponseDTO struct {
 	Success bool              `json:"success"`
 	Data    *TokenResponseDTO `json:"data"`
+}
+
+type VerifySuccessResponseDTO struct {
+	Success bool `json:"success"`
 }
