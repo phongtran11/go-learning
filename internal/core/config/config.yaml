@@ -1,6 +1,6 @@
 # Base configuration file
 app:
-  port: 8080
+  port: 8000
   name: "Modular Fiber API"
   env: "development"
 

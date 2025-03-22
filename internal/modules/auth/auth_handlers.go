@@ -47,7 +47,7 @@ func (h *handlers) Login(c *fiber.Ctx) error {
 
 	// Parse request body
 	if err := c.BodyParser(&loginDto); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
 	// Validate request body
@@ -92,7 +92,9 @@ func (h *handlers) Logout(c *fiber.Ctx) error {
 	}
 
 	// Return response
-	return c.SendStatus(fiber.StatusOK)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+	})
 }
 
 // Register handles user registration
@@ -204,6 +206,8 @@ func (h *handlers) VerifyEmail(c *fiber.Ctx) error {
 	}
 
 	// Return response
-	return c.SendStatus(fiber.StatusOK)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+	})
 
 }

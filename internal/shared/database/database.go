@@ -26,7 +26,7 @@ type (
 // NewDatabase creates a new database connection
 func NewDatabase(config *config.Config) (Database, error) {
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
 		config.DB.HOST, config.DB.USER, config.DB.PASSWORD, config.DB.NAME, config.DB.PORT, config.DB.SSL)
 
 	// Create a new GORM logger

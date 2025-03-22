@@ -8,7 +8,6 @@ import (
 	"modular-fx-fiber/internal/core/config"
 	appLogger "modular-fx-fiber/internal/shared/logger"
 	"modular-fx-fiber/internal/shared/validator"
-	"runtime/debug"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -16,7 +15,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/pkg/errors"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 // Server represents the Fiber server
@@ -40,22 +38,13 @@ func NewServer(l *appLogger.ZapLogger, config *config.Config) Server {
 	})
 
 	// Add CORS
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-	}))
+	app.Use(cors.New())
 
 	// Add Logger
 	app.Use(logger.New())
 
 	// Add middlewares
-	app.Use(recover.New(recover.Config{
-		EnableStackTrace: true,
-		StackTraceHandler: func(c *fiber.Ctx, err any) {
-			// Get stack trace
-			stackTrace := debug.Stack()
-			l.Error("PANIC RECOVERED: ", zap.String("stackTrace", string(stackTrace)))
-		},
-	}))
+	app.Use(recover.New())
 
 	return &server{
 		App:    app,

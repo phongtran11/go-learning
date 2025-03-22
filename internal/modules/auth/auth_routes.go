@@ -28,9 +28,8 @@ func Register(server server.Server, h Handlers, m middleware.Middleware) {
 	group := a.Group("api/auth")
 
 	group.Post("/login", h.Login)
-	group.Post("logout", h.Logout)
 	group.Post("/register", h.Register)
 	group.Post("/register/verify-email", m.JWT(), h.VerifyEmail)
 	group.Post("/refresh-token", h.RefreshToken)
-
+	group.Post("logout", m.JWT(), h.Logout)
 }
