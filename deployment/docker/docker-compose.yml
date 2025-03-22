@@ -1,28 +1,12 @@
 services:
-  app:
-    build:
-      context: ../../
-      dockerfile: ./deployment/docker/app/Dockerfile
-    environment:
-      - APP_ENV=production
-      - APP_JWT_SECRET=${JWT_SECRET}
-      - APP_DB_HOST=postgres
-      - APP_DB_PORT=5432
-      - APP_DB_USER=${DB_USER}
-      - APP_DB_PASSWORD=${DB_PASSWORD}
-      - APP_DB_NAME=${DB_NAME}
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-    restart: always
-
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${APP_DB_USER}
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD}
+      POSTGRES_DB: ${APP_DB_NAME}
+    ports:
+      - "${APP_DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always

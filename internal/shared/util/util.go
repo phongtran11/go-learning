@@ -1,9 +1,12 @@
 package util
 
-import "crypto/rand"
+import (
+	"crypto/rand"
+	"encoding/json"
+)
 
 func GenerateRandomCode(length int) string {
-	const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const charset = "0123456789"
 	if length <= 0 {
 		length = 6
 	}
@@ -20,4 +23,15 @@ func GenerateRandomCode(length int) string {
 	}
 
 	return string(result)
+}
+
+func StructToMap(obj any) (map[string]any, error) {
+	data, err := json.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	var result map[string]any
+	err = json.Unmarshal(data, &result)
+	return result, err
 }

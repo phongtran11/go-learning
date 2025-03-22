@@ -57,3 +57,10 @@ type ListUsersSuccessResponseDTO struct {
 	Success bool                    `json:"success"`
 	Data    *PaginatedUsersResponse `json:"data"`
 }
+
+// GetMeSuccessResponseDTO represents a successful get me response
+// @Description Response structure for successful get me requests
+type GetMeSuccessResponseDTO struct {
+	Success bool                    `json:"success"`
+	Data    *models.UserResponseDTO `json:"data"`
+}

@@ -19,6 +19,7 @@ type (
 	Handlers interface {
 		Create(c *fiber.Ctx) error
 		ListUsers(c *fiber.Ctx) error
+		GetMe(c *fiber.Ctx) error
 	}
 )
 
@@ -113,5 +114,27 @@ func (h *handlers) ListUsers(c *fiber.Ctx) error {
 	return c.JSON(ListUsersSuccessResponseDTO{
 		Success: true,
 		Data:    listUsers,
+	})
+}
+
+// GetMe handles getting the current user
+// @Summary Get current user
+// @Description Get the current user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} GetMeSuccessResponseDTO
+// @Router /users/me [get]
+func (h *handlers) GetMe(c *fiber.Ctx) error {
+	userId := c.Locals("user_id").(uint64)
+
+	user, err := h.service.GetMe(userId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(GetMeSuccessResponseDTO{
+		Success: true,
+		Data:    user,
 	})
 }

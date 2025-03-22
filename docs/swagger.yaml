@@ -11,14 +11,14 @@ definitions:
         minLength: 8
         type: string
     required:
-    - email
-    - password
+      - email
+      - password
     type: object
   auth.LoginSuccessResponseDTO:
     description: Response structure for successful login requests
     properties:
       data:
-        $ref: '#/definitions/auth.TokenResponseDTO'
+        $ref: "#/definitions/auth.TokenResponseDTO"
       success:
         type: boolean
     type: object
@@ -29,13 +29,13 @@ definitions:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
     required:
-    - refresh_token
+      - refresh_token
     type: object
   auth.RefreshTokenSuccessResponseDTO:
     description: Response structure for successful token refresh requests
     properties:
       data:
-        $ref: '#/definitions/auth.TokenResponseDTO'
+        $ref: "#/definitions/auth.TokenResponseDTO"
       success:
         type: boolean
     type: object
@@ -53,8 +53,8 @@ definitions:
         type: string
       gender:
         enum:
-        - 1
-        - 2
+          - 1
+          - 2
         example: 1
         type: integer
       last_name:
@@ -68,16 +68,16 @@ definitions:
         example: "0975234412"
         type: string
     required:
-    - email
-    - first_name
-    - last_name
-    - password
+      - email
+      - first_name
+      - last_name
+      - password
     type: object
   auth.RegisterSuccessResponseDTO:
     description: Response structure for successful registration requests
     properties:
       data:
-        $ref: '#/definitions/auth.TokenResponseDTO'
+        $ref: "#/definitions/auth.TokenResponseDTO"
       success:
         type: boolean
     type: object
@@ -106,7 +106,7 @@ definitions:
         minLength: 6
         type: string
     required:
-    - code
+      - code
     type: object
   models.UserResponseDTO:
     description: User information returned in API responses
@@ -177,8 +177,8 @@ definitions:
         type: string
       gender:
         enum:
-        - 1
-        - 2
+          - 1
+          - 2
         example: 1
         type: integer
       last_name:
@@ -192,23 +192,31 @@ definitions:
         example: "+12125551234"
         type: string
     required:
-    - email
-    - first_name
-    - last_name
-    - password
+      - email
+      - first_name
+      - last_name
+      - password
     type: object
   user.CreateUserSuccessResponseDTO:
     description: Response structure for successful user creation requests
     properties:
       data:
-        $ref: '#/definitions/models.UserResponseDTO'
+        $ref: "#/definitions/models.UserResponseDTO"
+      success:
+        type: boolean
+    type: object
+  user.GetMeSuccessResponseDTO:
+    description: Response structure for successful get me requests
+    properties:
+      data:
+        $ref: "#/definitions/models.UserResponseDTO"
       success:
         type: boolean
     type: object
   user.ListUsersSuccessResponseDTO:
     properties:
       data:
-        $ref: '#/definitions/user.PaginatedUsersResponse'
+        $ref: "#/definitions/user.PaginatedUsersResponse"
       success:
         type: boolean
     type: object
@@ -217,7 +225,7 @@ definitions:
     properties:
       items:
         items:
-          $ref: '#/definitions/models.UserResponseDTO'
+          $ref: "#/definitions/models.UserResponseDTO"
         type: array
       page:
         example: 1
@@ -248,136 +256,166 @@ paths:
   /auth/login:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Authenticate a user and return tokens
       parameters:
-      - description: Login credentials
-        in: body
-        name: credentials
-        required: true
-        schema:
-          $ref: '#/definitions/auth.LoginDTO'
+        - description: Login credentials
+          in: body
+          name: credentials
+          required: true
+          schema:
+            $ref: "#/definitions/auth.LoginDTO"
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/auth.LoginSuccessResponseDTO'
+            $ref: "#/definitions/auth.LoginSuccessResponseDTO"
       summary: User login
       tags:
-      - auth
-  /auth/refresh-token:
+        - auth
+  /auth/logout:
     post:
       consumes:
-      - application/json
-      description: Refresh access token using a refresh token
-      parameters:
-      - description: Refresh token
-        in: body
-        name: token
-        required: true
-        schema:
-          $ref: '#/definitions/auth.RefreshTokenDTO'
+        - application/json
+      description: Invalidate user tokens
       produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/auth.RefreshTokenSuccessResponseDTO'
-      summary: Refresh token
-      tags:
-      - auth
-  /auth/register:
-    post:
-      consumes:
-      - application/json
-      description: Register a new user and return tokens
-      parameters:
-      - description: Registration data
-        in: body
-        name: user
-        required: true
-        schema:
-          $ref: '#/definitions/auth.RegisterDTO'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/auth.RegisterSuccessResponseDTO'
-      summary: User registration
-      tags:
-      - auth
-  /auth/register/verify-email:
-    post:
-      consumes:
-      - application/json
-      description: Verify user email address
-      parameters:
-      - description: Verification code
-        in: body
-        name: code
-        required: true
-        schema:
-          $ref: '#/definitions/auth.VerifyEmailDTO'
-      produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
       security:
-      - BearerAuth: []
-      summary: Verify email
+        - BearerAuth: []
+      summary: User logout
       tags:
-      - auth
-  /users:
-    get:
-      consumes:
-      - application/json
-      description: List users with pagination
-      parameters:
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: page_size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/user.ListUsersSuccessResponseDTO'
-      summary: List users
-      tags:
-      - users
+        - auth
+  /auth/refresh-token:
     post:
       consumes:
-      - application/json
-      description: Create a new user with the provided details
+        - application/json
+      description: Refresh access token using a refresh token
       parameters:
-      - description: User details
-        in: body
-        name: user
-        required: true
-        schema:
-          $ref: '#/definitions/user.CreateUserDTO'
+        - description: Refresh token
+          in: body
+          name: token
+          required: true
+          schema:
+            $ref: "#/definitions/auth.RefreshTokenDTO"
       produces:
-      - application/json
+        - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/user.CreateUserSuccessResponseDTO'
+            $ref: "#/definitions/auth.RefreshTokenSuccessResponseDTO"
+      summary: Refresh token
+      tags:
+        - auth
+  /auth/register:
+    post:
+      consumes:
+        - application/json
+      description: Register a new user and return tokens
+      parameters:
+        - description: Registration data
+          in: body
+          name: user
+          required: true
+          schema:
+            $ref: "#/definitions/auth.RegisterDTO"
+      produces:
+        - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: "#/definitions/auth.RegisterSuccessResponseDTO"
+      summary: User registration
+      tags:
+        - auth
+  /auth/register/verify-email:
+    post:
+      consumes:
+        - application/json
+      description: Verify user email address
+      parameters:
+        - description: Verification code
+          in: body
+          name: code
+          required: true
+          schema:
+            $ref: "#/definitions/auth.VerifyEmailDTO"
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+        - BearerAuth: []
+      summary: Verify email
+      tags:
+        - auth
+  /users:
+    get:
+      consumes:
+        - application/json
+      description: List users with pagination
+      parameters:
+        - description: Page number
+          in: query
+          name: page
+          type: integer
+        - description: Page size
+          in: query
+          name: page_size
+          type: integer
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: "#/definitions/user.ListUsersSuccessResponseDTO"
+      summary: List users
+      tags:
+        - users
+    post:
+      consumes:
+        - application/json
+      description: Create a new user with the provided details
+      parameters:
+        - description: User details
+          in: body
+          name: user
+          required: true
+          schema:
+            $ref: "#/definitions/user.CreateUserDTO"
+      produces:
+        - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: "#/definitions/user.CreateUserSuccessResponseDTO"
       summary: Create a new user
       tags:
-      - users
+        - users
+  /users/me:
+    get:
+      consumes:
+        - application/json
+      description: Get the current user
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: "#/definitions/user.GetMeSuccessResponseDTO"
+      summary: Get current user
+      tags:
+        - users
 securityDefinitions:
   BearerAuth:
     in: header

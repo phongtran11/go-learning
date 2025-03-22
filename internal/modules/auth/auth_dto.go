@@ -66,3 +66,11 @@ type RefreshTokenSuccessResponseDTO struct {
 type VerifySuccessResponseDTO struct {
 	Success bool `json:"success"`
 }
+
+type LogoutDTO struct {
+	UserId uint64
+}
+
+type LogoutSuccessResponseDTO struct {
+	Success bool `json:"success"`
+}

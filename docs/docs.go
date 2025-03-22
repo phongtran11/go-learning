@@ -57,6 +57,31 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Invalidate user tokens",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "User logout",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/auth/refresh-token": {
             "post": {
                 "description": "Refresh access token using a refresh token",
@@ -225,6 +250,29 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/user.CreateUserSuccessResponseDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me": {
+            "get": {
+                "description": "Get the current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get current user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/user.GetMeSuccessResponseDTO"
                         }
                     }
                 }
@@ -503,6 +551,18 @@ const docTemplate = `{
         },
         "user.CreateUserSuccessResponseDTO": {
             "description": "Response structure for successful user creation requests",
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.UserResponseDTO"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "user.GetMeSuccessResponseDTO": {
+            "description": "Response structure for successful get me requests",
             "type": "object",
             "properties": {
                 "data": {

@@ -8,6 +8,7 @@ import (
 	"modular-fx-fiber/internal/shared/interfaces"
 	"modular-fx-fiber/internal/shared/logger"
 	"modular-fx-fiber/internal/shared/models"
+	"modular-fx-fiber/internal/shared/util"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -21,11 +22,13 @@ var (
 	ErrUserNotActive       = errors.New("user is not active")
 	ErrUserNotFound        = errors.New("user not found")
 	ErrInvalidVerifyCode   = errors.New("invalid verification code")
+	ErrUpdateUserFailed    = errors.New("failed to update user")
 )
 
 type (
 	AuthService interface {
 		Login(dto LoginDTO) (*TokenResponseDTO, error)
+		Logout(dto *LogoutDTO) error
 		Register(dto RegisterDTO) (*TokenResponseDTO, error)
 		RefreshToken(dto RefreshTokenDTO) (*TokenResponseDTO, error)
 		VerifyEmail(token VerifyEmailDTO, userId uint64) error
@@ -163,6 +166,16 @@ func (s *authService) Register(dto RegisterDTO) (*TokenResponseDTO, error) {
 			zap.Error(err))
 		return nil, err
 	}
+
+	go func() {
+		// Send verification email
+		err := s.SendVerifyEmailCode(createdUser.ID)
+		if err != nil {
+			s.logger.Error("Failed to send verification email",
+				zap.String("email", createdUser.Email),
+				zap.Error(err))
+		}
+	}()
 
 	s.logger.Info("User registered successfully",
 		zap.String("email", createdUser.Email),
@@ -308,7 +321,7 @@ func (s *authService) generateTokens(user *models.User) (*TokenResponseDTO, erro
 
 func (s *authService) VerifyEmail(ved VerifyEmailDTO, userId uint64) error {
 	// Get user by ID
-	user, err := s.userRepo.GetByID(uint64(userId))
+	user, err := s.userRepo.GetByID(userId)
 
 	// Check if there was an error
 	if err != nil {
@@ -329,8 +342,8 @@ func (s *authService) VerifyEmail(ved VerifyEmailDTO, userId uint64) error {
 	}
 
 	// Check if verification code is correct
-	if user.VerifyEmailCode != ved.Code {
-		s.logger.Warn("Invalid verification code", zap.Uint64("user_id", userId), zap.Any("code", ved.Code))
+	if *user.VerifyEmailCode != *ved.Code {
+		s.logger.Warn("Invalid verification code", zap.Uint64("user_id", userId), zap.Any("code", ved.Code), zap.Any("expected", user.VerifyEmailCode))
 		return ErrInvalidVerifyCode
 	}
 
@@ -347,5 +360,62 @@ func (s *authService) VerifyEmail(ved VerifyEmailDTO, userId uint64) error {
 
 	// Log success
 	s.logger.Info("User email verified", zap.Uint64("user_id", userId))
+	return nil
+}
+
+func (s *authService) SendVerifyEmailCode(userId uint64) error {
+	code := util.GenerateRandomCode(6)
+
+	// update code in user
+	user, err := s.userRepo.GetByID(userId)
+	if err != nil {
+		s.logger.Error("Failed to fetch user by ID", zap.Uint64("user_id", userId), zap.Error(err))
+		return err
+	}
+	if user == nil {
+		s.logger.Warn("User not found", zap.Uint64("user_id", userId))
+		return ErrUserNotFound
+	}
+
+	// update code in user
+	user.VerifyEmailCode = &code
+
+	// update user
+	err = s.userRepo.Update(user)
+	if err != nil {
+		s.logger.Error("Failed to update user", zap.Uint64("user_id", userId), zap.Error(err))
+		return ErrUpdateUserFailed
+	}
+
+	mailData, err := util.StructToMap(mailer.EmailVerificationData{
+		Name: user.FullName(),
+		Code: code,
+	})
+	if err != nil {
+		s.logger.Error("[SendVerifyEmailCode] Failed to convert struct to map", zap.Error(err))
+		return err
+	}
+
+	// send email
+	return s.gmailMailer.SendTemplatedEmail(
+		user.Email, mailer.EmailVerificationSubject,
+		mailer.EmailVerificationTemplate,
+		mailData,
+	)
+
+}
+
+// Logout invalidates user tokens
+func (s *authService) Logout(dto *LogoutDTO) error {
+	// Delete all refresh tokens for user
+	err := s.authRepo.DeleteUserRefreshTokens(dto.UserId)
+	if err != nil {
+		s.logger.Error("Failed to delete refresh tokens for user",
+			zap.Uint64("user_id", dto.UserId),
+			zap.Error(err))
+		return err
+	}
+
+	s.logger.Info("User logged out", zap.Uint64("user_id", dto.UserId))
 	return nil
 }

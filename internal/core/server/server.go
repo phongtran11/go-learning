@@ -11,6 +11,7 @@ import (
 	"runtime/debug"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/pkg/errors"
@@ -38,8 +39,14 @@ func NewServer(l *appLogger.ZapLogger, config *config.Config) Server {
 		ErrorHandler: customErrorHandler,
 	})
 
+	// Add CORS
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+	}))
+
 	// Add Logger
 	app.Use(logger.New())
+
 	// Add middlewares
 	app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,

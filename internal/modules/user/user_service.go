@@ -5,7 +5,6 @@ import (
 	"modular-fx-fiber/internal/shared/interfaces"
 	"modular-fx-fiber/internal/shared/logger"
 	"modular-fx-fiber/internal/shared/models"
-	"modular-fx-fiber/internal/shared/util"
 
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -24,6 +23,7 @@ type (
 	UserService interface {
 		CreateUser(dto *CreateUserDTO) (*models.UserResponseDTO, error)
 		ListUsers(page int, pageSize int) ([]*models.UserResponseDTO, int64, error)
+		GetMe(userID uint64) (*models.UserResponseDTO, error)
 	}
 )
 
@@ -54,20 +54,16 @@ func (s *service) CreateUser(dto *CreateUserDTO) (*models.UserResponseDTO, error
 		return nil, err
 	}
 
-	// Generate random verify email code
-	verifyEmailCode := util.GenerateRandomCode(6)
-
 	// Create user
 	user := &models.User{
-		Email:           dto.Email,
-		Password:        string(hashedPassword),
-		PhoneNumber:     dto.PhoneNumber,
-		FirstName:       dto.FirstName,
-		LastName:        dto.LastName,
-		DateOfBirth:     dto.DateOfBirth,
-		Gender:          dto.Gender,
-		Status:          models.USER_STATUS_ACTIVE,
-		VerifyEmailCode: &verifyEmailCode,
+		Email:       dto.Email,
+		Password:    string(hashedPassword),
+		PhoneNumber: dto.PhoneNumber,
+		FirstName:   dto.FirstName,
+		LastName:    dto.LastName,
+		DateOfBirth: dto.DateOfBirth,
+		Gender:      dto.Gender,
+		Status:      models.USER_STATUS_ACTIVE,
 	}
 
 	s.logger.Info("user", zap.Any("user", user))
@@ -92,4 +88,14 @@ func (s *service) ListUsers(page int, pageSize int) ([]*models.UserResponseDTO, 
 	}
 
 	return userResponse, totalCount, nil
+}
+
+func (s *service) GetMe(userID uint64) (*models.UserResponseDTO, error) {
+	user, err := s.repo.GetByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	userResponse := user.ToResponseDTO()
+	return userResponse, nil
 }

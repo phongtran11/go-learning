@@ -11,6 +11,7 @@ import (
 type (
 	Handlers interface {
 		Login(c *fiber.Ctx) error
+		Logout(c *fiber.Ctx) error
 		Register(c *fiber.Ctx) error
 		RefreshToken(c *fiber.Ctx) error
 		VerifyEmail(c *fiber.Ctx) error
@@ -67,6 +68,31 @@ func (h *handlers) Login(c *fiber.Ctx) error {
 		Success: true,
 		Data:    tokens,
 	})
+}
+
+// Logout handles user logout
+// @Summary User logout
+// @Description Invalidate user tokens
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200
+// @Router /auth/logout [post]
+func (h *handlers) Logout(c *fiber.Ctx) error {
+	// Get user ID from context
+	userId := c.Locals("user_id").(uint64)
+
+	// Logout user
+	err := h.service.Logout(&LogoutDTO{
+		UserId: userId,
+	})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	// Return response
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // Register handles user registration
@@ -168,15 +194,11 @@ func (h *handlers) VerifyEmail(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err)
 	}
 
-	// get user_id from local
-	userId := c.Locals("user_id")
-	userIdFloat64, ok := userId.(float64)
-	if !ok {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid user id")
-	}
+	// Get user ID from context
+	userId := c.Locals("user_id").(uint64)
 
 	// check verification code
-	err := h.service.VerifyEmail(verifyDto, uint64(userIdFloat64))
+	err := h.service.VerifyEmail(verifyDto, userId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
