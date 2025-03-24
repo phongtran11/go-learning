@@ -7,10 +7,9 @@ import (
 // Module exports the auth module dependencies
 var Module = fx.Options(
 	fx.Provide(
-		NewAuthRoutes,
+		NewRoutes,
 		NewHandlers,
 		NewService,
-		NewRepository,
 	),
 	fx.Invoke(Register),
 )

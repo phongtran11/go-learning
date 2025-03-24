@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"modular-fx-fiber/internal/shared/dto/auth_dto"
 	"modular-fx-fiber/internal/shared/logger"
 	"modular-fx-fiber/internal/shared/validator"
 
@@ -18,14 +19,14 @@ type (
 	}
 
 	handlers struct {
-		service   AuthService
+		service   Service
 		validator *validator.Validator
 		logger    *logger.ZapLogger
 	}
 )
 
 // NewHandlers creates a new auth handlers instance
-func NewHandlers(l *logger.ZapLogger, v *validator.Validator, s AuthService) Handlers {
+func NewHandlers(s Service, l *logger.ZapLogger, v *validator.Validator) Handlers {
 	return &handlers{
 		service:   s,
 		validator: v,
@@ -39,11 +40,11 @@ func NewHandlers(l *logger.ZapLogger, v *validator.Validator, s AuthService) Han
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body LoginDTO true "Login credentials"
-// @Success 200 {object} LoginSuccessResponseDTO
+// @Param credentials body auth_dto.LoginDTO true "Login credentials"
+// @Success 200 {object} auth_dto.LoginSuccessResponseDTO
 // @Router /auth/login [post]
 func (h *handlers) Login(c *fiber.Ctx) error {
-	var loginDto LoginDTO
+	var loginDto auth_dto.LoginDTO
 
 	// Parse request body
 	if err := c.BodyParser(&loginDto); err != nil {
@@ -51,20 +52,20 @@ func (h *handlers) Login(c *fiber.Ctx) error {
 	}
 
 	// Validate request body
-	errs := h.validator.Validate(loginDto)
+	errs := h.validator.Validate(&loginDto)
 	if errs != nil {
 		err := h.validator.ParseErrorToString(errs)
 		return fiber.NewError(fiber.StatusBadRequest, err)
 	}
 
 	// Login user
-	tokens, err := h.service.Login(loginDto)
+	tokens, err := h.service.Login(&loginDto)
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 	}
 
 	// Return response
-	return c.JSON(&LoginSuccessResponseDTO{
+	return c.JSON(&auth_dto.LoginSuccessResponseDTO{
 		Success: true,
 		Data:    tokens,
 	})
@@ -84,7 +85,7 @@ func (h *handlers) Logout(c *fiber.Ctx) error {
 	userId := c.Locals("user_id").(uint64)
 
 	// Logout user
-	err := h.service.Logout(&LogoutDTO{
+	err := h.service.Logout(&auth_dto.LogoutDTO{
 		UserId: userId,
 	})
 	if err != nil {
@@ -103,11 +104,11 @@ func (h *handlers) Logout(c *fiber.Ctx) error {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param user body RegisterDTO true "Registration data"
-// @Success 201 {object} RegisterSuccessResponseDTO
+// @Param user body auth_dto.RegisterDTO true "Registration data"
+// @Success 201 {object} auth_dto.RegisterSuccessResponseDTO
 // @Router /auth/register [post]
 func (h *handlers) Register(c *fiber.Ctx) error {
-	var registerDto RegisterDTO
+	var registerDto auth_dto.RegisterDTO
 
 	// Parse request body
 	if err := c.BodyParser(&registerDto); err != nil {
@@ -115,20 +116,20 @@ func (h *handlers) Register(c *fiber.Ctx) error {
 	}
 
 	// Validate request body
-	errs := h.validator.Validate(registerDto)
+	errs := h.validator.Validate(&registerDto)
 	if errs != nil {
 		err := h.validator.ParseErrorToString(errs)
 		return fiber.NewError(fiber.StatusBadRequest, err)
 	}
 
 	// Register user
-	tokens, err := h.service.Register(registerDto)
+	tokens, err := h.service.Register(&registerDto)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	// Return response
-	return c.Status(fiber.StatusCreated).JSON(&RegisterSuccessResponseDTO{
+	return c.Status(fiber.StatusCreated).JSON(&auth_dto.RegisterSuccessResponseDTO{
 		Success: true,
 		Data:    tokens,
 	})
@@ -140,11 +141,11 @@ func (h *handlers) Register(c *fiber.Ctx) error {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param token body RefreshTokenDTO true "Refresh token"
-// @Success 201 {object} RefreshTokenSuccessResponseDTO
+// @Param token body auth_dto.RefreshTokenDTO true "Refresh token"
+// @Success 201 {object} auth_dto.RefreshTokenSuccessResponseDTO
 // @Router /auth/refresh-token [post]
 func (h *handlers) RefreshToken(c *fiber.Ctx) error {
-	var refreshDto RefreshTokenDTO
+	var refreshDto auth_dto.RefreshTokenDTO
 
 	// Parse request body
 	if err := c.BodyParser(&refreshDto); err != nil {
@@ -159,13 +160,13 @@ func (h *handlers) RefreshToken(c *fiber.Ctx) error {
 	}
 
 	// Refresh token
-	tokens, err := h.service.RefreshToken(refreshDto)
+	tokens, err := h.service.RefreshToken(&refreshDto)
 	if err != nil {
-		fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	// Return response
-	return c.Status(fiber.StatusCreated).JSON(&RefreshTokenSuccessResponseDTO{
+	return c.Status(fiber.StatusCreated).JSON(&auth_dto.RefreshTokenSuccessResponseDTO{
 		Success: true,
 		Data:    tokens,
 	})
@@ -178,11 +179,11 @@ func (h *handlers) RefreshToken(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param code body VerifyEmailDTO true "Verification code"
+// @Param code body auth_dto.VerifyEmailDTO true "Verification code"
 // @Success 200
 // @Router /auth/register/verify-email [post]
 func (h *handlers) VerifyEmail(c *fiber.Ctx) error {
-	var verifyDto VerifyEmailDTO
+	var verifyDto auth_dto.VerifyEmailDTO
 
 	// Parse request body
 	if err := c.BodyParser(&verifyDto); err != nil {
@@ -200,7 +201,7 @@ func (h *handlers) VerifyEmail(c *fiber.Ctx) error {
 	userId := c.Locals("user_id").(uint64)
 
 	// check verification code
-	err := h.service.VerifyEmail(verifyDto, userId)
+	err := h.service.VerifyEmail(&verifyDto, userId)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}

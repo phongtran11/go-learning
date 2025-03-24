@@ -2,12 +2,12 @@ package user
 
 import (
 	"errors"
-	"modular-fx-fiber/internal/shared/interfaces"
-	"modular-fx-fiber/internal/shared/logger"
-	"modular-fx-fiber/internal/shared/models"
-
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
+	"modular-fx-fiber/internal/shared/dto/user_dto"
+	"modular-fx-fiber/internal/shared/logger"
+	"modular-fx-fiber/internal/shared/models"
+	"modular-fx-fiber/internal/shared/repositories"
 )
 
 var (
@@ -15,32 +15,33 @@ var (
 )
 
 type (
-	service struct {
-		logger *logger.ZapLogger
-		repo   interfaces.UserRepository
-	}
-
-	UserService interface {
-		CreateUser(dto *CreateUserDTO) (*models.UserResponseDTO, error)
+	Service interface {
+		CreateUser(dto *user_dto.CreateUserDTO) (*models.UserResponseDTO, error)
 		ListUsers(page int, pageSize int) ([]*models.UserResponseDTO, int64, error)
 		GetMe(userID uint64) (*models.UserResponseDTO, error)
+	}
+
+	service struct {
+		logger   *logger.ZapLogger
+		userRepo repositories.UserRepository
 	}
 )
 
 // NewService creates a new user service
 func NewService(
 	logger *logger.ZapLogger,
-	repo interfaces.UserRepository) UserService {
+	userRepo repositories.UserRepository,
+) Service {
 	return &service{
-		logger: logger,
-		repo:   repo,
+		logger:   logger,
+		userRepo: userRepo,
 	}
 }
 
 // CreateUser creates a new user
-func (s *service) CreateUser(dto *CreateUserDTO) (*models.UserResponseDTO, error) {
+func (s *service) CreateUser(dto *user_dto.CreateUserDTO) (*models.UserResponseDTO, error) {
 	// Check if email already exists
-	existingUser, err := s.repo.GetByEmail(dto.Email)
+	existingUser, err := s.userRepo.GetByEmail(dto.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +69,7 @@ func (s *service) CreateUser(dto *CreateUserDTO) (*models.UserResponseDTO, error
 
 	s.logger.Info("user", zap.Any("user", user))
 
-	if err := s.repo.Create(user); err != nil {
+	if err := s.userRepo.Create(user); err != nil {
 		return nil, err
 	}
 
@@ -77,7 +78,7 @@ func (s *service) CreateUser(dto *CreateUserDTO) (*models.UserResponseDTO, error
 }
 
 func (s *service) ListUsers(page int, pageSize int) ([]*models.UserResponseDTO, int64, error) {
-	users, totalCount, err := s.repo.List(page, pageSize)
+	users, totalCount, err := s.userRepo.List(page, pageSize)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -91,7 +92,7 @@ func (s *service) ListUsers(page int, pageSize int) ([]*models.UserResponseDTO, 
 }
 
 func (s *service) GetMe(userID uint64) (*models.UserResponseDTO, error) {
-	user, err := s.repo.GetByID(userID)
+	user, err := s.userRepo.GetByID(userID)
 	if err != nil {
 		return nil, err
 	}

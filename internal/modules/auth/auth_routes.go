@@ -6,30 +6,32 @@ import (
 )
 
 type (
-	AuthRoutes interface{}
+	Routes interface{}
 
-	authRoutes struct {
+	routes struct {
 		handlers   Handlers
 		middleware middleware.Middleware
 	}
 )
 
-// NewAuthRoutes creates new auth routes
-func NewAuthRoutes(handlers Handlers, middleware middleware.Middleware) AuthRoutes {
-	return &authRoutes{
-		handlers:   handlers,
-		middleware: middleware,
+// NewRoutes creates new auth routes
+func NewRoutes(h Handlers, m middleware.Middleware) Routes {
+	return &routes{
+		handlers:   h,
+		middleware: m,
 	}
 }
 
 // Register registers auth routes
-func Register(server server.Server, h Handlers, m middleware.Middleware) {
-	a := server.GetApp()
+func Register(s server.Server, h Handlers, m middleware.Middleware) {
+	a := s.GetApp()
 	group := a.Group("api/auth")
 
+	// Public routes
 	group.Post("/login", h.Login)
 	group.Post("/register", h.Register)
-	group.Post("/register/verify-email", m.JWT(), h.VerifyEmail)
 	group.Post("/refresh-token", h.RefreshToken)
+	// Protected routes
+	group.Post("/register/verify-email", m.JWT(), h.VerifyEmail)
 	group.Post("logout", m.JWT(), h.Logout)
 }

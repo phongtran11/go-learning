@@ -41,7 +41,7 @@ type User struct {
 	Roles         []Role         `json:"-" gorm:"many2many:user_roles;"`
 }
 
-// Getter method to get full name
+// FullName Getter method to get full name
 func (u *User) FullName() string {
 	return u.FirstName + " " + u.LastName
 }

@@ -6,16 +6,16 @@ import (
 )
 
 type (
-	userRoutes struct {
+	Routes interface{}
+
+	routes struct {
 		handlers *Handlers
 	}
-
-	UserRoutes interface{}
 )
 
-// NewUserRoutes creates new user routes
-func NewUserRoutes(h *Handlers) UserRoutes {
-	return &userRoutes{
+// NewRoutes creates new user routes
+func NewRoutes(h *Handlers) Routes {
+	return &routes{
 		handlers: h,
 	}
 }

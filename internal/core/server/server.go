@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"modular-fx-fiber/internal/core/config"
 	appLogger "modular-fx-fiber/internal/shared/logger"
 	"modular-fx-fiber/internal/shared/validator"
@@ -13,7 +13,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/pkg/errors"
 	"go.uber.org/fx"
 )
 
@@ -92,17 +91,12 @@ func customErrorHandler(c *fiber.Ctx, err error) error {
 	code := fiber.StatusInternalServerError
 
 	// Check if it's a Fiber error
-	if e, ok := err.(*fiber.Error); ok {
+	var e *fiber.Error
+	if errors.As(err, &e) {
 		code = e.Code
 	}
 
-	// Try to get stack trace from pkg/errors
-	if stackTracer, ok := err.(interface{ StackTrace() errors.StackTrace }); ok {
-		stackTrace := fmt.Sprintf("%+v", stackTracer.StackTrace())
-		// Log the full error with stack trace in development
-		log.Printf("ERROR: %s\nStack Trace:\n%s", err, stackTrace)
-	}
-
+	// Return JSON response if the error is internal server error, not exposed details to the client
 	if code == fiber.StatusInternalServerError {
 		// Send 500 status code when Internal Server Error
 		return c.Status(code).JSON(validator.GlobalErrorHandlerResponse{

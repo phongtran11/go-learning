@@ -7,10 +7,9 @@ import (
 // Module exports the user module dependencies
 var Module = fx.Options(
 	fx.Provide(
-		NewUserRoutes,
+		NewRoutes,
 		NewHandlers,
 		NewService,
-		NewRepository,
 	),
 	fx.Invoke(Register),
 )

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"modular-fx-fiber/internal/shared/dto/user_dto"
 	"modular-fx-fiber/internal/shared/logger"
 	"modular-fx-fiber/internal/shared/validator"
 	"strconv"
@@ -8,23 +9,23 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Handlers defines the HTTP handlers for users
 type (
-	handlers struct {
-		service   UserService
-		validator *validator.Validator
-		logger    *logger.ZapLogger
-	}
-
+	// Handlers defines the HTTP handlers for user management
 	Handlers interface {
 		Create(c *fiber.Ctx) error
 		ListUsers(c *fiber.Ctx) error
 		GetMe(c *fiber.Ctx) error
 	}
+
+	handlers struct {
+		service   Service
+		validator *validator.Validator
+		logger    *logger.ZapLogger
+	}
 )
 
 // NewHandlers creates a new user handlers instance
-func NewHandlers(l *logger.ZapLogger, v *validator.Validator, s UserService) Handlers {
+func NewHandlers(l *logger.ZapLogger, v *validator.Validator, s Service) Handlers {
 	return &handlers{
 		service:   s,
 		validator: v,
@@ -38,11 +39,11 @@ func NewHandlers(l *logger.ZapLogger, v *validator.Validator, s UserService) Han
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param   user body CreateUserDTO true "User details"
-// @Success 201 {object} CreateUserSuccessResponseDTO
+// @Param   user body user_dto.CreateUserDTO true "User details"
+// @Success 201 {object} user_dto.CreateUserSuccessResponseDTO
 // @Router /users [post]
 func (h *handlers) Create(c *fiber.Ctx) error {
-	createUserDto := &CreateUserDTO{}
+	createUserDto := &user_dto.CreateUserDTO{}
 
 	// Parse request body
 	if err := c.BodyParser(&createUserDto); err != nil {
@@ -64,7 +65,7 @@ func (h *handlers) Create(c *fiber.Ctx) error {
 	}
 
 	// Response with created user
-	return c.Status(fiber.StatusCreated).JSON(&CreateUserSuccessResponseDTO{
+	return c.Status(fiber.StatusCreated).JSON(&user_dto.CreateUserSuccessResponseDTO{
 		Success: true,
 		Data:    user,
 	})
@@ -103,7 +104,7 @@ func (h *handlers) ListUsers(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
-	listUsers := &PaginatedUsersResponse{
+	listUsers := &user_dto.PaginatedUsersResponse{
 		Items:      users,
 		TotalCount: total,
 		Page:       pageInt,
@@ -111,7 +112,7 @@ func (h *handlers) ListUsers(c *fiber.Ctx) error {
 		TotalPages: (total + int64(pageSizeInt) - 1) / int64(pageSizeInt),
 	}
 
-	return c.JSON(ListUsersSuccessResponseDTO{
+	return c.JSON(&user_dto.ListUsersSuccessResponseDTO{
 		Success: true,
 		Data:    listUsers,
 	})
@@ -133,7 +134,7 @@ func (h *handlers) GetMe(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	return c.JSON(GetMeSuccessResponseDTO{
+	return c.JSON(&user_dto.GetMeSuccessResponseDTO{
 		Success: true,
 		Data:    user,
 	})

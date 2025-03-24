@@ -44,10 +44,23 @@ func validateVNPhone(fl validator.FieldLevel) bool {
 	return vnPhoneRegex.MatchString(phone)
 }
 
+func validatePassword(fl validator.FieldLevel) bool {
+	password := fl.Field().String()
+
+	// Password must contain at least  one lowercase letter, one digit, and be at least 8 characters long
+	passwordRegex := regexp.MustCompile(`^(?=.*[a-z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$`)
+	return passwordRegex.MatchString(password)
+}
+
 // NewValidator creates a new validator
 func NewValidator(l *logger.ZapLogger) *Validator {
 	err := validate.RegisterValidation("vn_phone", validateVNPhone)
+	if err != nil {
+		l.Warn("Failed to register custom validation", zap.Error(err))
+		return nil
+	}
 
+	err = validate.RegisterValidation("password", validatePassword)
 	if err != nil {
 		l.Warn("Failed to register custom validation", zap.Error(err))
 		return nil
@@ -59,7 +72,7 @@ func NewValidator(l *logger.ZapLogger) *Validator {
 }
 
 func (cv *Validator) Validate(data any) []ErrorResponse {
-	validationErrors := []ErrorResponse{}
+	var validationErrors []ErrorResponse
 
 	errs := validate.Struct(data)
 	if errs != nil {

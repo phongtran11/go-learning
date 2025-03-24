@@ -4,6 +4,7 @@ import (
 	"modular-fx-fiber/internal/shared/database"
 	"modular-fx-fiber/internal/shared/logger"
 	"modular-fx-fiber/internal/shared/middleware"
+	"modular-fx-fiber/internal/shared/repositories"
 	"modular-fx-fiber/internal/shared/swagger"
 	"modular-fx-fiber/internal/shared/validator"
 
@@ -18,6 +19,9 @@ var Module = fx.Options(
 		middleware.NewMiddleware,
 		swagger.NewSwagger,
 		validator.NewValidator,
+		// Repositories
+		repositories.NewUserRepository,
+		repositories.NewRefreshTokenRepository,
 	),
 	fx.Invoke(swagger.Register),
 )
